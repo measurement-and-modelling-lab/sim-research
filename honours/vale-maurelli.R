@@ -104,5 +104,15 @@ ValeMaurelli1983 <- function(n = 100L, COR, skewness, kurtosis, debug = FALSE) {
         X[,i] <- FTable[i,1L] + FTable[i,2L]*Z[,i] + FTable[i,3L]*Z[,i]^2 + FTable[i,4L]*Z[,i]^3
     }
 
+    ## for (i=0; i<nvar; i++) {
+    ##     vec Z1 = Z.col(i)
+    ##     vec Z2 = Z1.transform( [](int val) { return (val * val); } ); ## Zi^2
+    ##     vec Z3 = Z1.transform( [](int val) { return (val * val * val); } ); ## Zi^3
+    ##     uvec indices(1);
+    ##     indices(0) = i;
+    ##     X = X.each_col(indices) = FTable(i,1) + FTable(i,2) * Z1 + FTable(i,3) * Z2 + FTable(i,4) * Z3 ## 100% untested
+    ## }
+
+    
     return(X)
 }
