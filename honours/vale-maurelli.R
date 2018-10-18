@@ -3,7 +3,7 @@
 
 mvrnonnorm <- function(n, mu, Sigma, skewness = NULL, kurtosis = NULL, empirical = FALSE) {
     p <- 3
-    Z <- ValeMaurelli1983copied(n = n, COR = cov2cor(Sigma), skewness = skewness, kurtosis = kurtosis)
+    Z <- ValeMaurelli1983(n = n, COR = cov2cor(Sigma), skewness = skewness, kurtosis = kurtosis)
     TMP <- scale(Z, center = FALSE, scale = 1/sqrt(diag(Sigma)))[ , , drop = FALSE] ## Divide the ith column of Z by ith diagonal element of Sigma
         ## int i;
         ## for (i=0; i<nvar; i++) {
@@ -12,7 +12,7 @@ mvrnonnorm <- function(n, mu, Sigma, skewness = NULL, kurtosis = NULL, empirical
         ##   double element = Sigma(i,i);
         ##   Z = Z.each_col(indices) / linspace<vec>(element,element,nvar);
         ## }
-    X <- sweep(TMP, MARGIN = 2, STATS = mu, FUN = "+") ## mat X = TMP.for_each( [](mat::elem_type& val) { val += 1.0; } );
+    X <- sweep(TMP, MARGIN = 2, STATS = mu, FUN = "+") ## mat X = TMP.for_each( [](mat::elem_type& val) { val += mu; } );
     X
 }
 
@@ -81,14 +81,17 @@ ValeMaurelli1983 <- function(n = 100L, COR, skewness, kurtosis, debug = FALSE) {
             }
         }
     }
+
   ##   int i;
   ##   int j;
   ##   mat ICOR = eye<mat>(nvar,nvar);
   ##   for (j=0; j<nvar-1; j++) {
   ##       for (i=j+1; i<nvar-1; i++) {
   ##           if (COR(i,j) == 0) {
-  ##             continue
+  ##             continue;
   ##       	} else {
+  ##                  ICOR(i,j) = getICOV(FTable(i,2), FTable(i,3), FTable(i,4), FTable(j,2), FTable(j,3), FTable(j,4), COR(i,j));
+  ##                  ICOR(j,i) = ICOR(i,j);
   ##           }
   ##       }
   ## }
@@ -96,6 +99,7 @@ ValeMaurelli1983 <- function(n = 100L, COR, skewness, kurtosis, debug = FALSE) {
     
 
     X <- Z <- MASS::mvrnorm(n=n, mu=rep(0,nvar), Sigma=ICOR)
+        ## arma_rng::set_seed(1234567);
         ## vec mu = zeros<vec>(nvar);
         ## Z = mvnrnd(mu, ICOR, nvar);
 
