@@ -10,7 +10,7 @@ mvrnonnorm <- function(n, mu, Sigma, skewness = NULL, kurtosis = NULL, empirical
         ##   uvec indices(1);
         ##   indices(0) = i;
         ##   double element = Sigma(i,i);
-        ##   Z = Z.each_col(indices) / linspace<vec>(element,element,nvar);
+        ##   Z = Z.each_col(indices) / linspace<vec>(element,element,nvar); ## Should probably be assigned to TMP
         ## }
     X <- sweep(TMP, MARGIN = 2, STATS = mu, FUN = "+") ## mat X = TMP.for_each( [](mat::elem_type& val) { val += mu; } );
     X
@@ -19,7 +19,7 @@ mvrnonnorm <- function(n, mu, Sigma, skewness = NULL, kurtosis = NULL, empirical
 
 ValeMaurelli1983 <- function(n = 100L, COR, skewness, kurtosis, debug = FALSE) {
 
-    fleishman1978 <- function(skewness, kurtosis) { # replace this with function for fetching from matrix
+    fleishman1978 <- function(skewness, kurtosis) { ## replace this with function for fetching from matrix
 
         system.function <- function(x, skewness, kurtosis) {
             b.=x[1L]; c.=x[2L]; d.=x[3L]
@@ -43,9 +43,7 @@ ValeMaurelli1983 <- function(n = 100L, COR, skewness, kurtosis, debug = FALSE) {
 
     getICOV <- function(b1, c1, d1, b2, c2, d2, R) {
 
-        ## Find values of b1, c1, d1, b2, c2, d2, that create a matrix as close as possible to R
-        ## Solving for rho
-        ## Simplify equation on paper?
+        ## Find value of rho that multiplies with b1, c1, d1, b2, c2, d2 to produce a correlation as close as possible to R
         objectiveFunction <- function(x, b1, c1, d1, b2, c2, d2, R) {
 
             rho <- x[1L]
@@ -65,7 +63,7 @@ ValeMaurelli1983 <- function(n = 100L, COR, skewness, kurtosis, debug = FALSE) {
 
     ## create Fleishman table
     FTable <- matrix(0, nvar, 4L) ## mat FTable = zeroes<mat>(nvar,4);
-    for (i in 1:nvar) { ## basically just fetch values from table
+    for (i in 1:nvar) { ## Fetch values from coefficients.csv
         FTable[i,] <- fleishman1978(skewness=SK[i], kurtosis=KU[i])
     }
 
@@ -99,7 +97,7 @@ ValeMaurelli1983 <- function(n = 100L, COR, skewness, kurtosis, debug = FALSE) {
     
 
     X <- Z <- MASS::mvrnorm(n=n, mu=rep(0,nvar), Sigma=ICOR)
-        ## arma_rng::set_seed(1234567);
+        ## arma_rng::set_seed(1234567); ## Seed with our RNG
         ## vec mu = zeros<vec>(nvar);
         ## Z = mvnrnd(mu, ICOR, nvar);
 
