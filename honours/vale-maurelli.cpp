@@ -8,22 +8,21 @@
 #include <armadillo>
 using namespace std;
 using namespace arma;
-// mvrnonnorm <- function(n, mu, Sigma, skewness = NULL, kurtosis = NULL, empirical = FALSE) {
-//     p <- 3
-//     Z <- ValeMaurelli1983(n = n, COR = cov2cor(Sigma), skewness = skewness, kurtosis = kurtosis)
-//     TMP <- scale(Z, center = FALSE, scale = 1/sqrt(diag(Sigma)))[ , , drop = FALSE] ## Divide the ith column of Z by ith diagonal element of Sigma
-//         ## int i;
-//         ## for (i=0; i<nvar; i++) {
-//         ##   uvec indices(1);
-//         ##   indices(0) = i;
-//         ##   double element = Sigma(i,i);
-//         ##   Z = Z.each_col(indices) / linspace<vec>(element,element,nvar); ## Should probably be assigned to TMP
-//         ## }
-//     X <- sweep(TMP, MARGIN = 2, STATS = mu, FUN = "+") ## mat X = TMP.for_each( [](mat::elem_type& val) { val += mu; } );
-//     X
-// }
-mat ValeMaurelli1983(n = 100L, COR, skewness, kurtosis, debug = FALSE) {
-	rowvec fleishman1978(double skewness, double kurtosis) { 
+mat cov2cor (mat S) {
+
+  vec d = S.diag();
+  vec d_squared = d.transform( [](int val) { return (val * val); } );
+  mat R = S.zeros();
+    for (int i=0; i<R.n_cols; i++) {
+      for (int j=0; j<R.n_cols; j++) {
+	R(i,j) = S(i,j) / (d_squared(i) * d_squared(j));
+      }
+    }
+  return(R);
+
+}
+
+rowvec fleishman1978(double skewness, double kurtosis) { 
 		  //replace this with function for fetching from matrix
 			static mat fleishmanTable;
 	  		fleishmanTable.load("coefficients.csv");
@@ -51,38 +50,42 @@ mat ValeMaurelli1983(n = 100L, COR, skewness, kurtosis, debug = FALSE) {
 	        return values;
 	  		}
 
+}
+
+float getICOV (float R, float b1, float c1, float d1, float b2, float c2, float d2) {
+
+	  float tol = 0.00000001;
+	  float increment = 0.01;
+	  float rho = R + 0.1;
+	  float eq = rho*(b1*b2 + 3*b1*d2 + 3*d1*b2 + 9*d1*d2) + rho * rho *(2*c1*c2) + rho * rho * rho *(6*d1*d2);
+
+	  while (eq - R > tol) {
+	  
+	    if (eq - R > tol) {
+	      increment = increment / 1.1;
+	      rho = rho - increment;
+	    } else if (rho - R < tol) {
+	      rho = rho + increment;
+	    } else {
+	      continue;
+	    }
+
+	    eq = rho*(b1*b2 + 3*b1*d2 + 3*d1*b2 + 9*d1*d2) + rho * rho *(2*c1*c2) + rho * rho * rho *(6*d1*d2);
+
 	  }
 
-//     getICOV <- function(b1, c1, d1, b2, c2, d2, R) {
+	  return rho;
+}
 
-//         ## Find value of rho that multiplies with b1, c1, d1, b2, c2, d2 to produce a correlation as close as possible to R
-//         objectiveFunction <- function(x, b1, c1, d1, b2, c2, d2, R) {
-
-//             rho <- x[1L]
-//             eq <- rho*(b1*b2 + 3*b1*d2 + 3*d1*b2 + 9*d1*d2) + rho^2*(2*c1*c2) + rho^3*(6*d1*d2) - R
-//             return(eq^2)
-
-//         }
-
-//         out <- nlminb(start=R, objective=objectiveFunction, scale=10, control=list(trace=0), b1=b1, c1=c1, d1=d1, b2=b2, c2=c2, d2=d2, R=R)
-
-//         rho <- out$par[1L]
-
-//         return(rho)
-//     }
-
-//     nvar <- ncol(COR) ##  int nvar = COR.n_cols;
+mat ValeMaurelli1983(int n, mat COR, double skewness, double kurtosis) {
 
 
+ uword nvar = COR.n_cols;
 // //create Fleishman table
-	mat FTable = zeroes<mat>(nvar,4);
-	int nvar = 10;
-	mat FTable = zeros<mat>(nvar,4);
+	mat FTable; FTable.zeros(nvar,4);
 	for (int i=0;i<nvar; i++) {
-		rowvec result = fleishman1978(1.25,3);
-		FTable.cols(0,3).each_row() = fleishman1978(SK[i],KU[i]);
+		FTable.row(i) = fleishman1978(skewness,kurtosis);
   	}
-
 
 // compute intermediate correlations between all pairs
    int i;
@@ -97,32 +100,48 @@ mat ValeMaurelli1983(n = 100L, COR, skewness, kurtosis, debug = FALSE) {
                    ICOR(j,i) = ICOR(i,j);
             }
         }
-  }
+  	}
 
-  //     X <- Z <- MASS::mvrnorm(n=n, mu=rep(0,nvar), Sigma=ICOR)
-//         ## arma_rng::set_seed(1234567); ## Seed with our RNG
-//         ## vec mu = zeros<vec>(nvar);
-//         ## Z = mvnrnd(mu, ICOR, nvar);
+    arma_rng::set_seed(1234567); // Seed with our RNG
+    vec mu = zeros<vec>(nvar);
+    mat Z = mvnrnd(mu, ICOR, n);
 
-//     ## transform Z using Fleishman constants
-//     for (i in 1:nvar) {
-//         X[,i] <- FTable[i,1L] + FTable[i,2L]*Z[,i] + FTable[i,3L]*Z[,i]^2 + FTable[i,4L]*Z[,i]^3
-//     }
-
-//     ## for (i=0; i<nvar; i++) {
-//     ##     vec Z1 = Z.col(i)
-//     ##     vec Z2 = Z1.transform( [](int val) { return (val * val); } ); ## Zi^2
-//     ##     vec Z3 = Z1.transform( [](int val) { return (val * val * val); } ); ## Zi^3
-//     ##     uvec indices(1);
-//     ##     indices(0) = i;
-//     ##     X = X.each_col(indices) = FTable(i,1) + FTable(i,2) * Z1 + FTable(i,3) * Z2 + FTable(i,4) * Z3 ## 100% untested
-//     ## }
-
-    
-//     return(X)
+    mat X;
+    X = Z.t();
+    Z = Z.t();
+    for (i=0; i<nvar; i++) {
+        vec Z1 = Z.col(i);
+        vec Z2 = Z1.transform( [](double val) { return (val * val); } ); // Zi^2
+        vec Z3 = Z1.transform( [](double val) { return (val * val * val); } ); // Zi^3
+       	X.col(i) = FTable(i,0) + FTable(i,1) * Z1 + FTable(i,2) * Z2 + FTable(i,3) * Z3; // 100% untested
+    }    
+	
+	return(X);
     
 }
+
+mat mvrnonnorm(int n, double mu, mat Sigma, double skewness, double kurtosis) {
+    int i;
+    int nvar = Sigma.n_cols;
+    mat Z = ValeMaurelli1983(n,cov2cor(Sigma),skewness,kurtosis);
+    for (i=0; i<nvar; i++) {
+       double element = Sigma(i,i);
+       Z.col(i) = Z.col(i) / linspace<vec>(element,element,n); // Should probably be assigned to TMP
+    }
+    Z.for_each( [&mu](mat::elem_type& val) { val += mu; } );
+    return(Z);
+}
+
 int main (int argc, char const *argv[]) {
+	//test values
+	mat COV;
+	COV.eye(5,5);
+	int n = 10000000;
+	double mu = 0;
+	double skewness=1.75;
+	double kurtosis=3.75;
+	mat result = mvrnonnorm(n,mu,COV,skewness,kurtosis);
+	cout << cor(result) << endl;
 
   return 0;
 }
