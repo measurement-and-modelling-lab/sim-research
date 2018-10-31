@@ -74,7 +74,7 @@ mat ValeMaurelli1983(int n, mat COR, double skewness, double kurtosis) {
 
   uword nvar = COR.n_cols;
 
-  // //create Fleishman table
+  // Create table of Fleishman coefficients
   mat FTable;
   FTable.zeros(nvar, 4);
   for (int i = 0; i < nvar; i++) {
@@ -89,8 +89,8 @@ mat ValeMaurelli1983(int n, mat COR, double skewness, double kurtosis) {
         continue;
       } else {
         ICOR(i, j) =
-            getICOV(FTable(i, 2), FTable(i, 3), FTable(i, 4), FTable(j, 2),
-                    FTable(j, 3), FTable(j, 4), COR(i, j));
+            getICOV(FTable(i, 1), FTable(i, 2), FTable(i, 3), FTable(j, 1),
+                    FTable(j, 2), FTable(j, 3), COR(i, j));
         ICOR(j, i) = ICOR(i, j);
       }
     }
@@ -125,8 +125,8 @@ mat mvrnonnorm(int n, double mu, mat Sigma, double skewness, double kurtosis) {
     Z.col(i) = Z.col(i) / linspace<vec>(element, element, n);
   }
 
-  Z.for_each(
-      [&mu](mat::elem_type &val) { val += mu; }); // Add mu to every score
+  // Add mu to every score
+  Z.for_each([&mu](mat::elem_type &val) { val += mu; });
 
   return Z;
 }
@@ -135,7 +135,7 @@ int main(int argc, char const *argv[]) {
   // test values
   mat COV;
   COV.eye(5, 5);
-  int n = 10000000;
+  int n = 1000;
   double mu = 0;
   double skewness = 1.75;
   double kurtosis = 3.75;
