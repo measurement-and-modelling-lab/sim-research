@@ -1,10 +1,11 @@
+// #define ARMA_NO_DEBUG // disable bound checks to improve speed
 #include <armadillo>
 using namespace arma;
 
 mat cov2cor(mat S) {
 
   vec d = S.diag();
-  vec d_squared = d.transform([](int val) { return (val * val); });
+  vec d_squared = square(d);
   mat R = S.zeros();
   for (int i = 0; i < R.n_cols; i++) {
     for (int j = 0; j < R.n_cols; j++) {
@@ -33,7 +34,7 @@ rowvec fleishman1978(double skewness, double kurtosis) {
     b = fleishmanTable(index, 2);
     c = fleishmanTable(index, 3);
     d = fleishmanTable(index, 4);
-    a = -1 * c;
+    a = -c;
     rowvec values(4);
     values(0) = a;
     values(1) = b;
@@ -81,7 +82,7 @@ mat ValeMaurelli1983(int n, mat COR, double skewness, double kurtosis) {
     FTable.row(i) = fleishman1978(skewness, kurtosis);
   }
 
-  // Compute intermediate correlations between all pairs
+  // Compute intermediate correlation matrix
   mat ICOR = eye<mat>(nvar, nvar);
   for (int j = 0; j < nvar - 1; j++) {
     for (int i = j + 1; i < nvar - 1; i++) {
@@ -96,7 +97,7 @@ mat ValeMaurelli1983(int n, mat COR, double skewness, double kurtosis) {
     }
   }
 
-  arma_rng::set_seed(1234567); // Seed with our RNG
+  arma_rng::set_seed(1234567); // Should seed with our RNG
   vec mu = zeros<vec>(nvar);
   mat Z = mvnrnd(mu, ICOR, n);
 
@@ -104,11 +105,9 @@ mat ValeMaurelli1983(int n, mat COR, double skewness, double kurtosis) {
   X = Z.t();
   Z = Z.t();
   for (int i = 0; i < nvar; i++) {
-    vec Z1 = Z.col(i);
-    vec Z2 = Z1.transform([](double val) { return (val * val); });       // Zi^2
-    vec Z3 = Z1.transform([](double val) { return (val * val * val); }); // Zi^3
-    X.col(i) = FTable(i, 0) + FTable(i, 1) * Z1 + FTable(i, 2) * Z2 +
-               FTable(i, 3) * Z3;
+    vec Zi = Z.col(i);
+    X.col(i) = FTable(i, 0) + FTable(i, 1) * Zi + FTable(i, 2) * square(Zi) +
+               FTable(i, 3) * pow(Zi, 3);
   }
 
   return X;
@@ -126,16 +125,19 @@ mat mvrnonnorm(int n, double mu, mat Sigma, double skewness, double kurtosis) {
   }
 
   // Add mu to every score
-  Z.for_each([&mu](mat::elem_type &val) { val += mu; });
+  if (mu != 0) {
+    Z.for_each([&mu](mat::elem_type &val) { val += mu; });
+  }
 
   return Z;
 }
 
 int main(int argc, char const *argv[]) {
+
   // test values
   mat COV;
   COV.eye(5, 5);
-  int n = 1000;
+  int n = 10000000;
   double mu = 0;
   double skewness = 1.75;
   double kurtosis = 3.75;
@@ -144,3 +146,9 @@ int main(int argc, char const *argv[]) {
 
   return 0;
 }
+
+
+/* Improving speed:
+- Change loops to column-major order
+- Change counters from int to uword
+*/
