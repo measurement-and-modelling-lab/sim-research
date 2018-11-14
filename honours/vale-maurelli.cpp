@@ -90,7 +90,7 @@ double getICOV(double R, double b1, double c1, double d1, double b2, double c2,
   return rho;
 }
 
-mat ValeMaurelli1983(int n, mat COR, double a, double b, double c, double d, int seed) {
+mat ValeMaurelli1983(int n, mat COR, double a, double b, double c, double d) {
 
   uword nvar = COR.n_cols;
 
@@ -120,7 +120,7 @@ mat ValeMaurelli1983(int n, mat COR, double a, double b, double c, double d, int
     }
   }
 
-  arma_rng::set_seed(seed); // Should seed with our RNG
+  arma_rng::set_seed(1234567); // Should seed with our RNG
   vec mu = zeros<vec>(nvar);
   mat Z = mvnrnd(mu, ICOR, n);
   mat X;
@@ -136,10 +136,10 @@ mat ValeMaurelli1983(int n, mat COR, double a, double b, double c, double d, int
 }
 
 mat mvrnonnorm(int n, double mu, mat Sigma, double a, double b, double c,
-               double d, int seed) {
+               double d) {
 
   uword nvar = Sigma.n_cols;
-  mat Z = ValeMaurelli1983(n, cov2cor(Sigma), a, b, c, d, seed);
+  mat Z = ValeMaurelli1983(n, cov2cor(Sigma), a, b, c, d);
   // Divide each column by the corresponding diagonal element of Sigma
   for (uword i = 0; i < nvar; i++) {
     double element = Sigma(i, i);
