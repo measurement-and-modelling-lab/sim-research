@@ -4,26 +4,28 @@
 using namespace arma;
 #include "vale-maurelli.h"
 
-double counsell(double r12, double r13, double r23, double n, double delta){
-	double detR = (1-pow(r12,2) - pow(r13,2)-pow(r23,2)) + (2 * r12 * r13 * r23);
-	double s = sqrt(((n - 1) * (1 + r23))/((2 * ((n - 1)/(n - 3)) * detR) + ((pow((r12 + r13),2))/4) * (pow((1 - r23),3))));
-	double p1 = normcdf((abs(r12 - r13) - delta) * s);
-	double p2 = normcdf((-abs(r12 - r13) - delta) * s);
-	return (p1-p2);
+double counsell(double r12, double r13, double r23, int n, double delta) {
+  double detR =
+      (1 - pow(r12, 2) - pow(r13, 2) - pow(r23, 2)) + (2 * r12 * r13 * r23);
+  double s = sqrt(((n - 1) * (1 + r23)) /
+                  ((2 * ((n - 1) / (n - 3)) * detR) +
+                   ((pow((r12 + r13), 2)) / 4) * (pow((1 - r23), 3))));
+  double p1 = normcdf((fabs(r12 - r13) - delta) * s);
+  double p2 = normcdf((-fabs(r12 - r13) - delta) * s);
+  return (p1 - p2);
 }
 
-double fisher(double r){
-	
-    double z = 0.5 * (log(1+r) - log(1-r));
-    return z;
+double fisher(double r) {
 
+  double z = 0.5 * (log(1 + r) - log(1 - r));
+  return z;
 }
 
 mat cov2cor(mat S) {
 
   vec d = S.diag();
   vec d_squared = square(d);
-  mat R(3,3);
+  mat R(3, 3);
   R.zeros();
   for (uword i = 0; i < R.n_cols; i++) {
     for (uword j = 0; j < R.n_cols; j++) {
@@ -84,12 +86,11 @@ double getICOV(double R, double b1, double c1, double d1, double b2, double c2,
 
     eq = rho * (b1 * b2 + 3 * b1 * d2 + 3 * d1 * b2 + 9 * d1 * d2) +
          rho * rho * (2 * c1 * c2) + rho * rho * rho * (6 * d1 * d2);
-
   }
   return rho;
 }
 
-mat ValeMaurelli1983(int n, mat COR, double a, double b,double c, double d) {
+mat ValeMaurelli1983(int n, mat COR, double a, double b, double c, double d) {
 
   uword nvar = COR.n_cols;
 
@@ -97,10 +98,10 @@ mat ValeMaurelli1983(int n, mat COR, double a, double b,double c, double d) {
   mat FTable;
   FTable.zeros(nvar, 4);
   rowvec values(4);
-    values(0) = a;
-    values(1) = b;
-    values(2) = c;
-    values(3) = d;
+  values(0) = a;
+  values(1) = b;
+  values(2) = c;
+  values(3) = d;
   for (uword i = 0; i < nvar; i++) {
     FTable.row(i) = values;
   }
@@ -112,8 +113,8 @@ mat ValeMaurelli1983(int n, mat COR, double a, double b,double c, double d) {
         continue;
       } else {
         ICOR(j, i) =
-            getICOV(COR(j, i), FTable(j, 1), FTable(j, 2), FTable(j, 3), FTable(i, 1),
-                    FTable(i, 2), FTable(i, 3));
+            getICOV(COR(j, i), FTable(j, 1), FTable(j, 2), FTable(j, 3),
+                    FTable(i, 1), FTable(i, 2), FTable(i, 3));
         ICOR(i, j) = ICOR(j, i);
       }
     }
@@ -134,7 +135,8 @@ mat ValeMaurelli1983(int n, mat COR, double a, double b,double c, double d) {
   return X;
 }
 
-mat mvrnonnorm(int n, double mu, mat Sigma, double a, double b,double c, double d) {
+mat mvrnonnorm(int n, double mu, mat Sigma, double a, double b, double c,
+               double d) {
 
   uword nvar = Sigma.n_cols;
   mat Z = ValeMaurelli1983(n, cov2cor(Sigma), a, b, c, d);

@@ -1,7 +1,7 @@
 #include <armadillo>
 using namespace arma;
 
-double counsell(double r12, double r13, double r23, double n, double delta);
+double counsell(double r12, double r13, double r23, int n, double delta);
 
 double fisher(double r);
 
