@@ -1,11 +1,7 @@
 #include <armadillo>
 using namespace arma;
 
-double dplus(double num[], double d1[], int length, double n);
-
-double dminus(double num[], double d2[], int length, double n);
-
-double kst(vec num, int length);
+double kst(vec data);
 
 vec compute4thOrderMoments(mat data);
 

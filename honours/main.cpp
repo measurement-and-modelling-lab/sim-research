@@ -56,8 +56,8 @@ int main(int argc, char const *argv[]) {
     }
    	double proportionAdf = (double)adfCounter/(double)interations;
     double proportionCounsell = (double)counsellCounter/(double)interations;
-    double adfD =  kst(ADFValues,interations);
-    double counsellD =  kst(counsellValues,interations);
+    double adfD =  kst(ADFValues);
+    double counsellD =  kst(counsellValues);
 
     // results(2i,0) = "ADF";
     // results(2i,1) = proportionAdf;
