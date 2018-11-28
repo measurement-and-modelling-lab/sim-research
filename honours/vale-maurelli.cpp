@@ -4,6 +4,178 @@
 using namespace arma;
 #include "vale-maurelli.h"
 
+double dplus(vec num, double d1[], int length, double n) {
+
+    for (int i = 0; i < length; i++) {
+        d1[i] = ((i + 1) / n) - num[i];
+    }
+
+    double d1max = d1[0];
+    for (int i = 0; i < length; i++) {
+        if (d1max <= d1[i]) {
+            d1max = d1[i];
+        }
+    }
+
+    return d1max;
+
+}
+
+double dminus(vec num, double d2[], int length, double n) {
+
+    for (int i = 0; i < length; i++) {
+        d2[i] = (num[i] - (i) / n);
+    }
+
+    double d2max = d2[0];
+    for (int i = 0; i < length; i++) {
+        if (d2max <= d2[i]) {
+            d2max = d2[i];
+        }
+    }
+    
+    return d2max;
+
+}
+
+double kst(vec num, int length) {
+    for (int i = 0; i < length; i++) {
+        for (int j = i + 1; j < length; j++) {
+            if (num[i] > num[j]) {
+                double temp;
+                temp = num[i];
+                num[i] = num[j];
+                num[j] = temp;
+            }
+        }
+    }
+
+    double d1[length];
+    double d2[length];
+    double n = (double) length;
+    double d1max = dplus(num, d1, length, n);
+    double d2max = dminus(num, d2, length, n);
+
+    double dplus = d1max;
+    double dminus = d2max;
+    double d;
+
+    if (dplus > dminus) {
+        d = dplus;
+        return d;
+    } else {
+        d = dminus;
+        return d;
+    }
+
+
+}
+
+
+vec compute4thOrderMoments(mat data) {
+
+  int n = data.n_rows;
+  int p = data.n_cols;
+  rowvec means = mean(data, 0);
+  rowvec sds = stddev(data, 0);
+  mat zscores = data;
+
+  for (uword i = 0; i < p; i++) {
+    zscores.col(i) = zscores.col(i) - means(i);
+    zscores.col(i) = zscores.col(i) / sds(i);
+  }
+
+  int q = p * (p + 1) * (p + 2) * (p + 3) / 24;
+  vec moments = zeros(q);
+  int a = 0;
+
+  for (uword i = 0; i < p; i++) {
+    for (uword j = 0; j <= i; j++) {
+      for (uword k = 0; k <= j; k++) {
+        for (uword h = 0; h <= k; h++) {
+          for (uword b = 0; b < n; b++) {
+            moments(a) = moments(a) + zscores(b, i) * zscores(b, j) *
+                                          zscores(b, k) * zscores(b, h);
+          }
+          a++;
+        }
+      }
+    }
+  }
+
+  moments = moments / (n - 1);
+
+  return moments;
+}
+
+double ADF(double r12, double r13, double r23, mat R, int n, mat sample, double delta,vec moments) {
+
+    double gamma_12 = adfCov(0,1,0,1,R,moments);
+    double gamma_13 = adfCov(0,2,0,2,R,moments);
+    double gamma_12_13 = adfCov(0,1,0,2,R,moments);
+    double detR = (1 - pow(r12,2) - pow(r13,2) - pow(r23,2)) + (2 * r12 * r13 * r23);
+    double s = (sqrt(((n - 1) * (1 + r23))/( (2 * ((n - 1)/(n - 3)) * detR) + (pow(r12 + r13,2))/4 * pow(1 - r23,3) ) ));
+
+    double adf_mod = 1/(sqrt(gamma_12 + gamma_13 - 2 * gamma_12_13));
+    double delta_mod = fabs((0.5 * log((1 + ((r12 + r13)/2 - delta/2)) / (1 - ((r12 + r13)/2 - delta/2)))) - (0.5 * log((1 + ((r12 + r13)/2 + delta/2)) / (1 - ((r12 + r13)/2 + delta/2)))));
+
+    double p1 = normcdf((fabs(fisher(r12) - fisher(r13)) - delta_mod) * sqrt(n-3) * adf_mod);
+    double p2 = normcdf((-fabs(fisher(r12) - fisher(r13)) - delta_mod) * sqrt(n-3) * adf_mod);
+    return p1 - p2;
+}
+
+
+double adfCov(int i, int j, int k, int h, mat R, vec moments) {
+    // Called by ComputeWBCorrChiSquare.R
+    // a, i and j are the group, row and column number of one correlation from the hypothesis matrix
+    // b, k and h are the group, row and column number of another (possibly the same) correlation from the hypothesis matrix
+    // R is the list of correlation matrices if using ADF, and the list of OLS matrices if using TSADF
+    // moments are the fourth order moments, i.e. values on kurtosis
+    // output is the covariance of the two correlations
+
+    double term1 = FRHO(i,j,k,h,moments);
+    double term2 = 0.25 * R[i,j] * R[k,h] * (FRHO(i,i,k,k,moments) + FRHO(j,j,k,k,moments) + FRHO(i,i,h,h,moments) + FRHO(j,j,h,h,moments));
+    double term3 = 0.5 * R[i,j] * (FRHO(i,i,k,h,moments) + FRHO(j,j,k,h,moments));
+    double term4 = 0.5 * R[k,h] * (FRHO(i,j,k,k,moments) + FRHO(i,j,h,h,moments));
+    double Cov = term1 + term2 - term3 - term4;
+
+    return Cov;
+}
+
+int findpos (int i, int j, int k, int h) {
+    // Called by FRHO.R
+    // i and j are the row and column number of one correlation from the hypothesis matrix
+    // k and h are the row and column number of another (possibly the same) correlation from the hypothesis matrix
+    // Returns the index number of the kurtosis for the two correlations in the moments vector (M)
+
+    rowvec indices(4);
+    indices(0) = i;
+    indices(1) = j;
+    indices(2) = k;
+    indices(3) = h;
+
+    indices = sort(indices,"descend");
+
+    int a = indices[0]+1;
+    int b = indices[1]+1;
+    int c = indices[2]+1;
+    int d = indices[3]+1;
+
+    int post = (a-1)*a*(a+1)*(a+2)/24 + (b-1)*b*(b+1)/6 + c*(c-1)/2 + d;
+    return post-1;
+}
+
+double FRHO (int i, int j, int k, int h, vec M) {
+  // Called by adfCov.R
+  // j and k are the row and column number of one correlation from the hypothesis matrix
+  // h and m are the row and column number of another (possibly the same) correlation from the hypothesis matrix
+  // Returns the kurtosis for two the correlations
+
+  int temp = findpos(i, j, k, h);
+  double fpho = M[temp];
+  return fpho;
+}
+
 double counsell(double r12, double r13, double r23, int n, double delta) {
   double detR =
       (1 - pow(r12, 2) - pow(r13, 2) - pow(r23, 2)) + (2 * r12 * r13 * r23);
@@ -90,7 +262,7 @@ double getICOV(double R, double b1, double c1, double d1, double b2, double c2,
   return rho;
 }
 
-mat ValeMaurelli1983(int n, mat COR, double a, double b, double c, double d) {
+mat ValeMaurelli1983(int n, mat COR, double a, double b, double c, double d,int seed) {
 
   uword nvar = COR.n_cols;
 
@@ -120,7 +292,7 @@ mat ValeMaurelli1983(int n, mat COR, double a, double b, double c, double d) {
     }
   }
 
-  arma_rng::set_seed(1234567); // Should seed with our RNG
+  arma_rng::set_seed(seed); // Should seed with our RNG
   vec mu = zeros<vec>(nvar);
   mat Z = mvnrnd(mu, ICOR, n);
   mat X;
@@ -136,10 +308,10 @@ mat ValeMaurelli1983(int n, mat COR, double a, double b, double c, double d) {
 }
 
 mat mvrnonnorm(int n, double mu, mat Sigma, double a, double b, double c,
-               double d) {
+               double d,int seed) {
 
   uword nvar = Sigma.n_cols;
-  mat Z = ValeMaurelli1983(n, cov2cor(Sigma), a, b, c, d);
+  mat Z = ValeMaurelli1983(n, cov2cor(Sigma), a, b, c, d,seed);
   // Divide each column by the corresponding diagonal element of Sigma
   for (uword i = 0; i < nvar; i++) {
     double element = Sigma(i, i);
