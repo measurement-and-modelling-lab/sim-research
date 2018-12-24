@@ -1,7 +1,7 @@
 #include <armadillo>
 using namespace arma;
 
-double kst(vec data);
+double ksD(vec data);
 
 vec compute4thOrderMoments(mat data);
 
