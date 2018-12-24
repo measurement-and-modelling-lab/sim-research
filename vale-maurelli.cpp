@@ -1,6 +1,5 @@
-#define ARMA_NO_DEBUG // disable bound checks to improve speed
+#define ARMA_NO_DEBUG // Disable bound checks to improve speed
 #include <armadillo>
-#include <ctime>
 using namespace arma;
 #include "vale-maurelli.h"
 
@@ -57,10 +56,10 @@ double ADF(double r12, double r13, double r23, mat R, int n, mat sample,
     double gamma_12_13 = adfCov(0, 1, 0, 2, R, moments);
     double z1 = sqrt(n) * (fabs(r12 - r13) - delta) *
 	(1 / sqrt(gamma_12 + gamma_13 -
-		  2 * gamma_12_13)); // Equivalence
+		  2 * gamma_12_13));
     double z2 = sqrt(n) * (-fabs(r12 - r13) - delta) *
 	(1 / sqrt(gamma_12 + gamma_13 -
-		  2 * gamma_12_13)); // Equivalence
+		  2 * gamma_12_13));
     double p = normcdf(z1) - normcdf(z2);
     return p;
 
@@ -215,7 +214,7 @@ mat ValeMaurelli1983(int n, mat COR, double a, double b, double c, double d,
 	}
     }
 
-    arma_rng::set_seed(seed); // Should seed with our RNG
+    arma_rng::set_seed(seed);
     vec mu = zeros<vec>(nvar);
     mat Z = mvnrnd(mu, ICOR, n);
     mat X;
@@ -230,20 +229,16 @@ mat ValeMaurelli1983(int n, mat COR, double a, double b, double c, double d,
     return X;
 }
 
-mat mvrnonnorm(int n, double mu, mat Sigma, double a, double b, double c,
+mat mvrnonnorm(int n, mat Sigma, double a, double b, double c,
                double d, int seed) {
 
     uword nvar = Sigma.n_cols;
     mat Z = ValeMaurelli1983(n, cov2cor(Sigma), a, b, c, d, seed);
+
     // Divide each column by the corresponding diagonal element of Sigma
     for (uword i = 0; i < nvar; i++) {
 	double element = Sigma(i, i);
 	Z.col(i) = Z.col(i) / linspace<vec>(element, element, n);
-    }
-
-    // Add mu to every score
-    if (mu != 0) {
-	Z.for_each([&mu](mat::elem_type &val) { val += mu; });
     }
 
     return Z;

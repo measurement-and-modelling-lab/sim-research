@@ -47,8 +47,7 @@ int main() {
 
 	    int seed_index = i * iterations + j;
 
-	    double mu = 0;
-	    mat sample = mvrnonnorm(n, mu, P, a, b, c, d, seeds(seed_index));
+	    mat sample = mvrnonnorm(n, P, a, b, c, d, seeds(seed_index));
 
 	    // Calculate sample correlation matrix
 	    mat R = cor(sample);
