@@ -72,13 +72,13 @@ double adfCov(int i, int j, int k, int h, mat R, vec moments) {
     // output is the covariance of the two correlations
 
     double term1 = FRHO(i, j, k, h, moments);
-    double term2 = 0.25 * R[i, j] * R[k, h] *
+    double term2 = 0.25 * R(i, j) * R(k, h) *
 	(FRHO(i, i, k, k, moments) + FRHO(j, j, k, k, moments) +
 	 FRHO(i, i, h, h, moments) + FRHO(j, j, h, h, moments));
     double term3 =
-	0.5 * R[i, j] * (FRHO(i, i, k, h, moments) + FRHO(j, j, k, h, moments));
+	0.5 * R(i, j) * (FRHO(i, i, k, h, moments) + FRHO(j, j, k, h, moments));
     double term4 =
-	0.5 * R[k, h] * (FRHO(i, j, k, k, moments) + FRHO(i, j, h, h, moments));
+	0.5 * R(k, h) * (FRHO(i, j, k, k, moments) + FRHO(i, j, h, h, moments));
     double cov = term1 + term2 - term3 - term4;
 
     return cov;
@@ -92,7 +92,7 @@ int findpos(int i, int j, int k, int h) {
     // index number of the kurtosis for the two correlations in the moments vector
     // (M)
 
-    rowvec indices(4);
+    vec indices(4);
     indices(0) = i;
     indices(1) = j;
     indices(2) = k;
@@ -100,13 +100,15 @@ int findpos(int i, int j, int k, int h) {
 
     indices = sort(indices, "descend");
 
-    int a = indices[0] + 1;
-    int b = indices[1] + 1;
-    int c = indices[2] + 1;
-    int d = indices[3] + 1;
+    int a = indices(0) + 1;
+    int b = indices(1) + 1;
+    int c = indices(2) + 1;
+    int d = indices(3) + 1;
 
-    int index = (a - 1) * a * (a + 1) * (a + 2) / 24 + (b - 1) * b * (b + 1) / 6 +
-	c * (c - 1) / 2 + d;
+    int index = (a - 1) * a * (a + 1) * (a + 2) / 24 +
+	        (b - 1) * b * (b + 1) / 6 +
+	         c * (c - 1) / 2 +
+	         d;
 
     return index - 1;
 }
@@ -119,7 +121,7 @@ double FRHO(int i, int j, int k, int h, vec moments) {
     // kurtosis for two the correlations
 
     int temp = findpos(i, j, k, h);
-    double fpho = moments[temp];
+    double fpho = moments(temp);
     return fpho;
 }
 
