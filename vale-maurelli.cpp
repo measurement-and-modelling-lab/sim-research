@@ -4,10 +4,10 @@ using namespace arma;
 #include "vale-maurelli.h"
 
 double ksD(vec data) { // Uniform data only
-    data = sort(data);
-    int n = data.n_rows;
-    vec t1error = linspace<vec>(1, n, n) / n;
-    vec d = abs(t1error - data);
+    vec expected = sort(data);
+    int n = expected.n_rows;
+    vec observed = linspace<vec>(1, n, n) / n;
+    vec d = abs(expected - observed);
     return max(d);
 }
 
@@ -55,14 +55,11 @@ double ADF(double r12, double r13, double r23, mat R, int n, mat sample,
     double gamma_13 = adfCov(0, 2, 0, 2, R, moments);
     double gamma_12_13 = adfCov(0, 1, 0, 2, R, moments);
     double z1 = sqrt(n) * (fabs(r12 - r13) - delta) *
-	(1 / sqrt(gamma_12 + gamma_13 -
-		  2 * gamma_12_13));
+	(1 / sqrt(gamma_12 + gamma_13 - 2 * gamma_12_13));
     double z2 = sqrt(n) * (-fabs(r12 - r13) - delta) *
-	(1 / sqrt(gamma_12 + gamma_13 -
-		  2 * gamma_12_13));
+	(1 / sqrt(gamma_12 + gamma_13 - 2 * gamma_12_13));
     double p = normcdf(z1) - normcdf(z2);
     return p;
-
 }
 
 double adfCov(int i, int j, int k, int h, mat R, vec moments) {
@@ -108,15 +105,13 @@ int findpos(int i, int j, int k, int h) {
     int c = indices[2] + 1;
     int d = indices[3] + 1;
 
-    int index = (a - 1) * a * (a + 1) * (a + 2) / 24 +
-	        (b - 1) * b * (b + 1) / 6 +
-	         c * (c - 1) / 2 +
-	         d;
+    int index = (a - 1) * a * (a + 1) * (a + 2) / 24 + (b - 1) * b * (b + 1) / 6 +
+	c * (c - 1) / 2 + d;
 
     return index - 1;
 }
 
-double FRHO(int i, int j, int k, int h, vec M) {
+double FRHO(int i, int j, int k, int h, vec moments) {
     // Called by adfCov.R
     // j and k are the row and column number of one correlation from the
     // hypothesis matrix h and m are the row and column number of another
@@ -124,7 +119,7 @@ double FRHO(int i, int j, int k, int h, vec M) {
     // kurtosis for two the correlations
 
     int temp = findpos(i, j, k, h);
-    double fpho = M[temp];
+    double fpho = moments[temp];
     return fpho;
 }
 
@@ -146,7 +141,7 @@ double fisher(double r) {
 
 mat cov2cor(mat S) {
     vec d = S.diag();
-    vec d_squared = square(d);
+    vec d_squared = pow(d, 2);
     mat R(3, 3);
     R.zeros();
     for (uword i = 0; i < R.n_cols; i++) {
@@ -157,14 +152,13 @@ mat cov2cor(mat S) {
     return R;
 }
 
-double getICOV(double R, double b1, double c1, double d1, double b2, double c2,
-               double d2) {
+double getICOV(double R, double b, double c, double d) {
 
     double tol = 0.001;
     double increment = 0.01;
     double rho = R + 0.1;
-    double eq = rho * (b1 * b2 + 3 * b1 * d2 + 3 * d1 * b2 + 9 * d1 * d2) +
-	rho * rho * (2 * c1 * c2) + rho * rho * rho * (6 * d1 * d2);
+    double eq = rho * (pow(b, 2) + 3 * b * d + 3 * d * b + 9 * pow(d, 2)) +
+	pow(rho, 2) * (2 * pow(c, 2)) + pow(rho, 3) * (6 * pow(d, 2));
 
     while (eq - R > tol) {
 
@@ -177,69 +171,44 @@ double getICOV(double R, double b1, double c1, double d1, double b2, double c2,
 	    continue;
 	}
 
-	eq = rho * (b1 * b2 + 3 * b1 * d2 + 3 * d1 * b2 + 9 * d1 * d2) +
-	    rho * rho * (2 * c1 * c2) + rho * rho * rho * (6 * d1 * d2);
+        eq = rho * (pow(b, 2) + 3 * b * d + 3 * d * b + 9 * pow(d, 2)) +
+	    pow(rho, 2) * (2 * pow(c, 2)) + pow(rho, 3) * (6 * pow(d, 2));
+
     }
     return rho;
 }
 
-mat ValeMaurelli1983(int n, mat COR, double a, double b, double c, double d,
-                     int seed) {
+mat ValeMaurelli(int n, mat P, double a, double b, double c, double d,
+                 int seed) {
 
-    uword nvar = COR.n_cols;
+    uword nvar = P.n_cols;
 
-    // Create table of Fleishman coefficients
-    mat FTable;
-    FTable.zeros(nvar, 4);
-    rowvec values(4);
-    values(0) = a;
-    values(1) = b;
-    values(2) = c;
-    values(3) = d;
-    for (uword i = 0; i < nvar; i++) {
-	FTable.row(i) = values;
-    }
     // Compute intermediate correlation matrix
     mat ICOR = eye<mat>(nvar, nvar);
     for (uword j = 0; j < nvar - 1; j++) {
 	for (uword i = j + 1; i < nvar; i++) {
-	    if (COR(j, i) == 0) {
+	    if (P(j, i) == 0) {
 		continue;
 	    } else {
-		ICOR(j, i) =
-		    getICOV(COR(j, i), FTable(j, 1), FTable(j, 2), FTable(j, 3),
-			    FTable(i, 1), FTable(i, 2), FTable(i, 3));
+		ICOR(j, i) = getICOV(P(j, i), b, c, d);
 		ICOR(i, j) = ICOR(j, i);
 	    }
 	}
     }
 
+    // Create normal data with specified correlation structure
     arma_rng::set_seed(seed);
     vec mu = zeros<vec>(nvar);
     mat Z = mvnrnd(mu, ICOR, n);
     mat X;
     X = Z.t();
     Z = Z.t();
+
+    // Scale each marginal by the Fleishman coefficients
     for (uword i = 0; i < nvar; i++) {
 	vec Zi = Z.col(i);
-	X.col(i) = FTable(i, 0) + FTable(i, 1) * Zi + FTable(i, 2) * square(Zi) +
-	    FTable(i, 3) * pow(Zi, 3);
+	X.col(i) = a + b * Zi + c * pow(Zi, 2) + d * pow(Zi, 3);
     }
 
     return X;
-}
-
-mat mvrnonnorm(int n, mat Sigma, double a, double b, double c,
-               double d, int seed) {
-
-    uword nvar = Sigma.n_cols;
-    mat Z = ValeMaurelli1983(n, cov2cor(Sigma), a, b, c, d, seed);
-
-    // Divide each column by the corresponding diagonal element of Sigma
-    for (uword i = 0; i < nvar; i++) {
-	double element = Sigma(i, i);
-	Z.col(i) = Z.col(i) / linspace<vec>(element, element, n);
-    }
-
-    return Z;
 }

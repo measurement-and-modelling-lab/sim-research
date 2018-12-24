@@ -19,12 +19,6 @@ double fisher(double r);
 
 mat cov2cor(mat S);
 
-// Retrieve coefficients for skew/kurtosis pair
-rowvec fleishman1978(double skewness, double kurtosis);
+double getICOV(double R, double b, double c, double d);
 
-double getICOV(double R, double b1, double c1, double d1, double b2, double c2,
-               double d2);
-
-mat ValeMaurelli1983(int n, mat COR, double a, double b,double c, double d,int seed);
-
-mat mvrnonnorm(int n, mat Sigma, double a, double b,double c, double d,int seed);
+mat ValeMaurelli(int n, mat P, double a, double b,double c, double d,int seed);
