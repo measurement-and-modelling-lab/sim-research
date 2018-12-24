@@ -3,7 +3,7 @@
 using namespace arma;
 #define ARMA_NO_DEBUG // disable bound checks to improve speed
 
-int main() {
+int main(void) {
 
     // Iterations per condition
     int iterations = 1000;
@@ -16,6 +16,8 @@ int main() {
 
     // Header for .csv output
     cout << "condition,statistic,alpha,D" << endl;
+
+    double delta = 0.1;
 
     for (int i = 0; i < conditions.n_rows; i++) {
 
@@ -51,19 +53,15 @@ int main() {
 
     	    // Calculate sample correlation matrix
     	    mat R = cor(sample);
-    	    double r12 = R(0, 1);
-    	    double r13 = R(0, 2);
-    	    double r23 = R(1, 2);
-    	    double delta = 0.1;
 
     	    vec moments = compute4thOrderMoments(sample);
 
-    	    p_adf(j) = ADF(r12, r13, r23, R, n, sample, delta, moments);
+    	    p_adf(j) = ADF(R, n, delta, moments);
     	    if (p_adf(j) <= .05) {
     		counter_adf++;
     	    }
 
-    	    p_counsell(j) = counsell(r12, r13, r23, n, delta);
+    	    p_counsell(j) = counsell(R, n, delta);
     	    if (p_counsell(j) <= .05) {
     		counter_counsell++;
     	    }

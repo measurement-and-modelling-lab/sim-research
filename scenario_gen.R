@@ -2,7 +2,7 @@ library(stringr) ## str_split_fixed
 
 skew <- c(0, 0, 0, 1, 0, 1)
 kurtosis <- c(-1, 0, 1, 1, 3, 3)
-n <- c(125, 250, 500)
+n <- c(75, 125, 250, 500)
 rho12 <- c(0.2, 0.4, 0.6, 0.8)
 rho23 <- c(0.2, 0.5, 0.8)
 

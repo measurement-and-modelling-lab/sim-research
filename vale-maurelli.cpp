@@ -3,21 +3,44 @@
 using namespace arma;
 #include "vale-maurelli.h"
 
-double ksD(vec data) { // Uniform data only
-    vec expected = sort(data);
+double kurtosis(vec X) {
+    // X is a vector of scores
+    // Returns kurtosis of vector
+
+    double m4 = mean(pow(X - mean(X), 4));
+    double kurt = m4 / pow(stddev(X), 4) - 3;
+    return kurt;
+}
+
+double skewness(vec X) {
+    // X is a vector of scores
+    // Returns skewness of vector
+
+    double m3 = mean(pow(X - mean(X), 3));
+    double skew = m3 / pow(stddev(X), 3);
+    return skew;
+}
+
+double ksD(vec X) {
+    // X is a set of p values
+    // Returns uniform Kolmogorov-Smirnov D
+
+    vec expected = sort(X);
     int n = expected.n_rows;
-    vec observed = linspace<vec>(1, n, n) / n;
+    vec observed = linspace(1, n, n) / n;
     vec d = abs(expected - observed);
     return max(d);
 }
 
-vec compute4thOrderMoments(mat data) {
+vec compute4thOrderMoments(mat X) {
+    // X is a matrix of data
+    // Returns fourth order moments of X
 
-    int n = data.n_rows;
-    int p = data.n_cols;
-    rowvec means = mean(data, 0);
-    rowvec sds = stddev(data, 0);
-    mat zscores = data;
+    int n = X.n_rows;
+    int p = X.n_cols;
+    rowvec means = mean(X, 0);
+    rowvec sds = stddev(X, 0);
+    mat zscores = X;
 
     for (uword i = 0; i < p; i++) {
 	zscores.col(i) = zscores.col(i) - means(i);
@@ -25,7 +48,7 @@ vec compute4thOrderMoments(mat data) {
     }
 
     int q = p * (p + 1) * (p + 2) * (p + 3) / 24;
-    vec moments = zeros(q);
+    vec moments(q);
     int a = 0;
 
     for (uword i = 0; i < p; i++) {
@@ -47,29 +70,37 @@ vec compute4thOrderMoments(mat data) {
     return moments;
 }
 
-double ADF(double r12, double r13, double r23, mat R, int n, mat sample,
-           double delta, vec moments) {
+double ADF(mat R, int n, double delta, vec moments) {
+    // R is a correlation matrix
+    // n is the sample size of the data set
+    // delta is the difference between r12 and r13 under H0
+    // moments is the 4th order moments of the data set
+    // Returns p value for test of |r12-r12| <= delta
+
+    double r12 = R(0, 1);
+    double r13 = R(0, 2);
+    double r23 = R(1, 2);
 
     // Z ADF
     double gamma_12 = adfCov(0, 1, 0, 1, R, moments);
     double gamma_13 = adfCov(0, 2, 0, 2, R, moments);
     double gamma_12_13 = adfCov(0, 1, 0, 2, R, moments);
+
     double z1 = sqrt(n) * (fabs(r12 - r13) - delta) *
 	(1 / sqrt(gamma_12 + gamma_13 - 2 * gamma_12_13));
     double z2 = sqrt(n) * (-fabs(r12 - r13) - delta) *
 	(1 / sqrt(gamma_12 + gamma_13 - 2 * gamma_12_13));
     double p = normcdf(z1) - normcdf(z2);
+
     return p;
+
 }
 
 double adfCov(int i, int j, int k, int h, mat R, vec moments) {
-    // Called by ComputeWBCorrChiSquare.R
-    // a, i and j are the group, row and column number of one correlation from the
-    // hypothesis matrix b, k and h are the group, row and column number of
-    // another (possibly the same) correlation from the hypothesis matrix R is the
-    // list of correlation matrices if using ADF, and the list of OLS matrices if
-    // using TSADF moments are the fourth order moments, i.e. values on kurtosis
-    // output is the covariance of the two correlations
+    // i/j and k/h are the row and column indices of two correlations
+    // R is the correlation matrix
+    // moments is the 4th order moments for the entire data set
+    // Returns asymptotic covariance of rij and rkh
 
     double term1 = FRHO(i, j, k, h, moments);
     double term2 = 0.25 * R(i, j) * R(k, h) *
@@ -85,12 +116,8 @@ double adfCov(int i, int j, int k, int h, mat R, vec moments) {
 }
 
 int findpos(int i, int j, int k, int h) {
-    // Called by FRHO.R
-    // i and j are the row and column number of one correlation from the
-    // hypothesis matrix k and h are the row and column number of another
-    // (possibly the same) correlation from the hypothesis matrix Returns the
-    // index number of the kurtosis for the two correlations in the moments vector
-    // (M)
+    // i/j and k/h are the row and column indices of two correlations
+    // Returns index for kurtosis of rij and rkh in moments vector
 
     vec indices(4);
     indices(0) = i;
@@ -106,55 +133,58 @@ int findpos(int i, int j, int k, int h) {
     int d = indices(3) + 1;
 
     int index = (a - 1) * a * (a + 1) * (a + 2) / 24 +
-	        (b - 1) * b * (b + 1) / 6 +
-	         c * (c - 1) / 2 +
-	         d;
+		(b - 1) * b * (b + 1) / 6 +
+		 c * (c - 1) / 2 +
+		 d;
 
     return index - 1;
 }
 
 double FRHO(int i, int j, int k, int h, vec moments) {
-    // Called by adfCov.R
-    // j and k are the row and column number of one correlation from the
-    // hypothesis matrix h and m are the row and column number of another
-    // (possibly the same) correlation from the hypothesis matrix Returns the
-    // kurtosis for two the correlations
+    // i/j and k/h are the row and column indices of two correlations
+    // moments is the fourth order moments of the data set
+    // Returns moments for rij and rkh
 
     int temp = findpos(i, j, k, h);
     double fpho = moments(temp);
     return fpho;
 }
 
-double counsell(double r12, double r13, double r23, int n, double delta) {
+double counsell(mat R, int n, double delta) {
+    // R is a correlation matrix
+    // n is the sample size of the data set
+    // delta is the difference between r12 and r13 under H0
+    // Returns p value for test of |r12-r12| <= delta
+
+    double r12 = R(0, 1);
+    double r13 = R(0, 2);
+    double r23 = R(1, 2);
+
     double detR =
 	(1 - pow(r12, 2) - pow(r13, 2) - pow(r23, 2)) + (2 * r12 * r13 * r23);
     double s = sqrt(((n - 1) * (1 + r23)) /
 		    ((2 * ((n - 1) / (n - 3)) * detR) +
 		     ((pow((r12 + r13), 2)) / 4) * (pow((1 - r23), 3))));
-    double p1 = normcdf((fabs(r12 - r13) - delta) * s);
-    double p2 = normcdf((-fabs(r12 - r13) - delta) * s);
-    return (p1 - p2);
+
+    double z1 = (fabs(r12 - r13) - delta) * s;
+    double z2 = (-fabs(r12 - r13) - delta) * s;
+    double p = normcdf(z1) - normcdf(z2);
+
+    return p;
 }
 
 double fisher(double r) {
+    // r is a correlation coefficient
+    // Returns Fisher transform of r
+
     double z = 0.5 * (log(1 + r) - log(1 - r));
     return z;
 }
 
-mat cov2cor(mat S) {
-    vec d = S.diag();
-    vec d_squared = pow(d, 2);
-    mat R(3, 3);
-    R.zeros();
-    for (uword i = 0; i < R.n_cols; i++) {
-	for (uword j = 0; j < R.n_cols; j++) {
-	    R(j, i) = S(j, i) / (d_squared(i) * d_squared(j));
-	}
-    }
-    return R;
-}
-
 double getICOV(double R, double b, double c, double d) {
+    // R is a correlation
+    // b, c and d are Fleishman coefficients
+    // Returns intermediary correlation for R
 
     double tol = 0.001;
     double increment = 0.01;
@@ -173,20 +203,26 @@ double getICOV(double R, double b, double c, double d) {
 	    continue;
 	}
 
-        eq = rho * (pow(b, 2) + 3 * b * d + 3 * d * b + 9 * pow(d, 2)) +
+	eq = rho * (pow(b, 2) + 3 * b * d + 3 * d * b + 9 * pow(d, 2)) +
 	    pow(rho, 2) * (2 * pow(c, 2)) + pow(rho, 3) * (6 * pow(d, 2));
 
     }
+
     return rho;
 }
 
 mat ValeMaurelli(int n, mat P, double a, double b, double c, double d,
-                 int seed) {
+		 int seed) {
+    // n is the sample size
+    // P is the population correlation structure
+    // a, b, c, and d are Fleishman coefficients
+    // Returns n observation data set with correlation structure P
+    //  and distribution corresponding to a, b, c, and d
 
-    uword nvar = P.n_cols;
+    int nvar = P.n_cols;
 
     // Compute intermediate correlation matrix
-    mat ICOR = eye<mat>(nvar, nvar);
+    mat ICOR = eye(nvar, nvar);
     for (uword j = 0; j < nvar - 1; j++) {
 	for (uword i = j + 1; i < nvar; i++) {
 	    if (P(j, i) == 0) {
@@ -200,16 +236,14 @@ mat ValeMaurelli(int n, mat P, double a, double b, double c, double d,
 
     // Create normal data with specified correlation structure
     arma_rng::set_seed(seed);
-    vec mu = zeros<vec>(nvar);
-    mat Z = mvnrnd(mu, ICOR, n);
-    mat X;
-    X = Z.t();
-    Z = Z.t();
+    vec mu = zeros(nvar);
+    mat X = mvnrnd(mu, ICOR, n);
+    X = X.t();
 
     // Scale each marginal by the Fleishman coefficients
     for (uword i = 0; i < nvar; i++) {
-	vec Zi = Z.col(i);
-	X.col(i) = a + b * Zi + c * pow(Zi, 2) + d * pow(Zi, 3);
+	vec Xi = X.col(i);
+	X.col(i) = a + b * Xi + c * pow(Xi, 2) + d * pow(Xi, 3);
     }
 
     return X;
