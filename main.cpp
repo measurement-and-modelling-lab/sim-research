@@ -1,7 +1,14 @@
 #include <armadillo>
-#include "vale-maurelli.h"
 using namespace arma;
 #define ARMA_NO_DEBUG // disable bound checks to improve speed
+
+#include "ADF.h"
+#include "compute4thOrderMoments.h"
+#include "counsell.h"
+#include "ksD.h"
+#include "kurtosis.h"
+#include "skewness.h"
+#include "ValeMaurelli.h"
 
 int main(void) {
 
@@ -48,13 +55,10 @@ int main(void) {
     	for (int j = 0; j < iterations; j++) {
 
     	    int seed_index = i * iterations + j;
-
     	    mat sample = ValeMaurelli(n, P, a, b, c, d, seeds(seed_index));
 
-    	    // Calculate sample correlation matrix
     	    mat R = cor(sample);
-
-    	    vec moments = compute4thOrderMoments(sample);
+	    vec moments = compute4thOrderMoments(sample);
 
     	    p_adf(j) = ADF(R, n, delta, moments);
     	    if (p_adf(j) <= .05) {
