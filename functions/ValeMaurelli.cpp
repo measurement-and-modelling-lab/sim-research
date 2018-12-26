@@ -9,18 +9,18 @@ double getICOV(double R, double b, double c, double d) {
 
     // Returns intermediate correlation for R
 
-    double tol = 0.001;
-    double increment = 0.01;
-    double rho = R + 0.1;
+    double tol = 0.00000000001;
+    double increment = 0.5;
+    double rho = 1;
     double eq = rho * (pow(b, 2) + 3 * b * d + 3 * d * b + 9 * pow(d, 2)) +
 	pow(rho, 2) * (2 * pow(c, 2)) + pow(rho, 3) * (6 * pow(d, 2));
 
-    while (eq - R > tol) {
+    while (pow(eq-R, 2) > tol) {
 
-	if (eq - R > tol) {
-	    increment = increment / 1.01;
+	if (eq > R) {
 	    rho = rho - increment;
-	} else if (rho - R < tol) {
+	} else if (eq < R) {
+	    increment = increment / 2;
 	    rho = rho + increment;
 	} else {
 	    continue;

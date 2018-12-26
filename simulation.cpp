@@ -22,7 +22,7 @@ int main(void) {
     seeds.load("seeds.csv");
 
     // Header for .csv output
-    cout << "condition,statistic,alpha,D" << endl;
+    cout << "condition,statistic,alpha,D,skewness,kurtosis" << endl;
 
     double delta = 0.1;
 
@@ -88,11 +88,32 @@ int main(void) {
     	double error_counsell = (double)counter_counsell / (double)iterations;
     	double D_counsell = kolmogorovD(p_counsell);
 
-	double kurtosis_i = accu(sample_kurtosis) / ((double)iterations * 3);
-	double skewness_i = accu(sample_skewness) / ((double)iterations * 3);
+	double kurtosis_i = sample_kurtosis / ((double)iterations * 3);
+	double skewness_i = sample_skewness / ((double)iterations * 3);
 
-    	cout << i << "," << "ADF" << "," << error_adf << "," << D_adf << "," << kurtosis_i << endl;
-    	cout << i << "," << "Counsell" << "," << error_counsell << "," << D_counsell << "," << skewness_i << endl;
+    	cout << i
+	     << ","
+	     << "ADF"
+	     << ","
+	     << error_adf
+	     << ","
+	     << D_adf
+	     << ","
+	     << skewness_i
+	     << ","
+	     << kurtosis_i
+	     << endl;
+
+    	cout << i
+	     << ","
+	     << "Counsell"
+	     << ","
+	     << error_counsell
+	     << ","
+	     << D_counsell
+	     << ","
+	     << ","
+	     << endl;
 
     }
 
