@@ -92,7 +92,7 @@ int main(void) {
 	double skewness_i = accu(sample_skewness) / ((double)iterations * 3);
 
     	cout << i << "," << "ADF" << "," << error_adf << "," << D_adf << "," << kurtosis_i << endl;
-    	cout << i << "," << "Counsell" << "," << error_counsell << "," << D_counsell << "," << endl;
+    	cout << i << "," << "Counsell" << "," << error_counsell << "," << D_counsell << "," << skewness_i << endl;
 
     }
 
