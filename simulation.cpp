@@ -5,7 +5,7 @@ using namespace arma;
 #include "ADF.h"
 #include "compute4thOrderMoments.h"
 #include "counsell.h"
-#include "ksD.h"
+#include "kolmogorovD.h"
 #include "kurtosis.h"
 #include "skewness.h"
 #include "ValeMaurelli.h"
@@ -31,6 +31,10 @@ int main(void) {
     	// The p values for each statistic
     	vec p_adf(iterations);
     	vec p_counsell(iterations);
+
+	// The kurtosis and skewn for each sample
+    	double sample_skewness = 0;
+    	double sample_kurtosis = 0;
 
     	// Count the number of rejections
     	int counter_adf = 0;
@@ -66,19 +70,29 @@ int main(void) {
     	    }
 
     	    p_counsell(j) = counsell(R, n, delta);
+
     	    if (p_counsell(j) <= .05) {
     		counter_counsell++;
     	    }
-    	}
+
+	    for (int k = 0; k < 3; k++) { // maybe just do one column?
+		sample_kurtosis = sample_kurtosis + kurtosis(sample.col(k));
+		sample_skewness = sample_skewness + skewness(sample.col(k));
+	    }
+
+	}
 
     	double error_adf = (double)counter_adf / (double)iterations;
-    	double D_adf =  ksD(p_adf);
+    	double D_adf =  kolmogorovD(p_adf);
 
     	double error_counsell = (double)counter_counsell / (double)iterations;
-    	double D_counsell = ksD(p_counsell);
+    	double D_counsell = kolmogorovD(p_counsell);
 
-    	cout << i << "," << "ADF" << "," << error_adf << "," << D_adf << endl;
-    	cout << i << "," << "Counsell" << "," << error_counsell << "," << D_counsell << endl;
+	double kurtosis_i = accu(sample_kurtosis) / ((double)iterations * 3);
+	double skewness_i = accu(sample_skewness) / ((double)iterations * 3);
+
+    	cout << i << "," << "ADF" << "," << error_adf << "," << D_adf << "," << kurtosis_i << endl;
+    	cout << i << "," << "Counsell" << "," << error_counsell << "," << D_counsell << "," << endl;
 
     }
 
