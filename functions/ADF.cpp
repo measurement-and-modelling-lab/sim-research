@@ -3,31 +3,30 @@
 using namespace arma;
 #include "ADF.h"
 
-double ADF(mat R, int n, double delta, vec moments) {
+double zADF(mat R, int n, double delta, vec moments) {
     // R is a correlation matrix
     // n is the sample size of the data set
     // delta is the difference between r12 and r13 under H0
-    // moments is the 4th order moments of the data set
-
-    // Returns p value for test of |r12-r13| <= delta
+    // moments is a vector of kurtosis estimates
+    // Returns a p value for test of |r12-r13| <= delta
 
     double r12 = R(0, 1);
     double r13 = R(0, 2);
     double r23 = R(1, 2);
 
-    // Z ADF
     double gamma_12 = adfCov(0, 1, 0, 1, R, moments);
     double gamma_13 = adfCov(0, 2, 0, 2, R, moments);
     double gamma_12_13 = adfCov(0, 1, 0, 2, R, moments);
 
     double z1 = sqrt(n) * (fabs(r12 - r13) - delta) *
-	(1 / sqrt(gamma_12 + gamma_13 - 2 * gamma_12_13));
+    	(1 / sqrt(gamma_12 + gamma_13 - 2 * gamma_12_13));
     double z2 = sqrt(n) * (-fabs(r12 - r13) - delta) *
-	(1 / sqrt(gamma_12 + gamma_13 - 2 * gamma_12_13));
+    	(1 / sqrt(gamma_12 + gamma_13 - 2 * gamma_12_13));
     double p = normcdf(z1) - normcdf(z2);
 
     return p;
 }
+
 
 double adfCov(int i, int j, int k, int h, mat R, vec moments) {
     // i/j and k/h are the row and column indices of two correlations
@@ -53,7 +52,6 @@ double adfCov(int i, int j, int k, int h, mat R, vec moments) {
 
 int findpos(int i, int j, int k, int h) {
     // i/j and k/h are the row and column indices of two correlations
-
     // Returns index for kurtosis of rij and rkh in moments vector
 
     vec indices(4);
@@ -80,7 +78,6 @@ int findpos(int i, int j, int k, int h) {
 double FRHO(int i, int j, int k, int h, vec moments) {
     // i/j and k/h are the row and column indices of two correlations
     // moments is the fourth order moments of the data set
-
     // Returns moments for rij and rkh
 
     int temp = findpos(i, j, k, h);

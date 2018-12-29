@@ -1,9 +1,10 @@
 #define ARMA_NO_DEBUG // Disable bound checks to improve speed
 #include <armadillo>
 using namespace arma;
-#include "ValeMaurelli.h"
+#include "getIntermediateP.h"
 
-double getICOV(double R, double b, double c, double d) {
+
+double getIntermediateRho(double R, double b, double c, double d) {
     // R is a correlation
     // b, c and d are Fleishman coefficients
 
@@ -33,41 +34,22 @@ double getICOV(double R, double b, double c, double d) {
     return rho;
 }
 
-mat ValeMaurelli(int n, mat P, double a, double b, double c, double d,
-                 int seed) {
-    // n is the sample size
-    // P is the population correlation structure
-    // a, b, c, and d are Fleishman coefficients
-
-    // Returns n observation data set with correlation structure P
-    // and distribution corresponding to a, b, c, and d
+mat getIntermediateP(mat P, double b, double c, double d) {
 
     int nvar = P.n_cols;
 
     // Compute intermediate correlation matrix
-    mat ICOR = eye(nvar, nvar);
+    mat intermediate_P = eye(nvar, nvar);
     for (uword j = 0; j < nvar - 1; j++) {
 	for (uword i = j + 1; i < nvar; i++) {
 	    if (P(j, i) == 0) {
 		continue;
 	    } else {
-		ICOR(j, i) = getICOV(P(j, i), b, c, d);
-		ICOR(i, j) = ICOR(j, i);
+		intermediate_P(j, i) = getIntermediateRho(P(j, i), b, c, d);
+		intermediate_P(i, j) = intermediate_P(j, i);
 	    }
 	}
     }
 
-    // Create normal data with intermediate correlation structure
-    arma_rng::set_seed(seed);
-    vec mu = zeros(nvar);
-    mat X = mvnrnd(mu, ICOR, n);
-    X = X.t();
-
-    // Scale each marginal by the Fleishman coefficients
-    for (uword i = 0; i < nvar; i++) {
-	vec Xi = X.col(i);
-	X.col(i) = a + b * Xi + c * pow(Xi, 2) + d * pow(Xi, 3);
-    }
-
-    return X;
+    return intermediate_P;
 }

@@ -8,12 +8,13 @@ using namespace arma;
 #include "kolmogorovD.h"
 #include "kurtosis.h"
 #include "skewness.h"
-#include "ValeMaurelli.h"
+#include "getIntermediateP.h"
+#include "getSample.h"
 
 int main(void) {
 
     // Iterations per condition
-    int iterations = 1000;
+    int iterations = 12000;
 
     mat conditions;
     conditions.load("conditions.csv");
@@ -22,11 +23,11 @@ int main(void) {
     seeds.load("seeds.csv");
 
     // Header for .csv output
-    cout << "condition,statistic,alpha,D,skewness,kurtosis" << endl;
+    cout << "condition,statistic,alpha,D,skewness_obs,kurtosis_obs" << endl;
 
     double delta = 0.1;
 
-    for (int i = 0; i < conditions.n_rows; i++) {
+    for (int i = 1; i < conditions.n_rows; i++) {
 
     	// The p values for each statistic
     	vec p_adf(iterations);
@@ -56,15 +57,17 @@ int main(void) {
     	P(1, 2) = rho23;
     	P = symmatu(P);
 
+	mat intermediate_P = getIntermediateP(P, b, c, d);
+
     	for (int j = 0; j < iterations; j++) {
 
-    	    int seed_index = i * iterations + j;
-    	    mat sample = ValeMaurelli(n, P, a, b, c, d, seeds(seed_index));
+	    int seed = seeds(i * iterations + j - 1);
+    	    mat sample = getSample(n, intermediate_P, seed, a, b, c, d);
 
     	    mat R = cor(sample);
 	    vec moments = compute4thOrderMoments(sample);
 
-    	    p_adf(j) = ADF(R, n, delta, moments);
+    	    p_adf(j) = zADF(R, n, delta, moments);
     	    if (p_adf(j) <= .05) {
     		counter_adf++;
     	    }
@@ -93,7 +96,7 @@ int main(void) {
 
     	cout << i
 	     << ","
-	     << "ADF"
+	     << "zADF"
 	     << ","
 	     << error_adf
 	     << ","

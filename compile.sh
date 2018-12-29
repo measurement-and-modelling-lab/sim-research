@@ -1,7 +1,8 @@
 g++ simulation.cpp				\
     -I ./functions				\
     ./functions/ADF.cpp				\
-    ./functions/ValeMaurelli.cpp		\
+    ./functions/getIntermediateP.cpp		\
+    ./functions/getSample.cpp		        \
     ./functions/compute4thOrderMoments.cpp	\
     ./functions/counsell.cpp			\
     ./functions/kolmogorovD.cpp			\
