@@ -1,9 +1,9 @@
 #define ARMA_NO_DEBUG
 #include <armadillo>
 using namespace arma;
-#include "ADF.h"
+#include "serafini2019.h"
 
-double zADF(mat R, int n, double delta, vec moments) {
+double serafini2019(mat R, int n, double delta, vec moments) {
     // R is a correlation matrix
     // n is the sample size of the data set
     // delta is the difference between r12 and r13 under H0

@@ -1,14 +1,13 @@
 #define ARMA_NO_DEBUG // Disable bound checks to improve speed
 #include <armadillo>
 using namespace arma;
-#include "counsell.h"
+#include "counsell2015.h"
 
-double counsell(mat R, int n, double delta) {
+double counsell2015(mat R, int n, double delta) {
     // R is a correlation matrix
     // n is the sample size of the data set
-    // delta is the difference between r12 and r13 under H0
-
-    // Returns p value for test of |r12-r13| <= delta
+    // delta is the minimum difference between r12 and r13 under the null hypothesis
+    // Returns a p value for equivalence test of r12 and r13
 
     double r12 = R(0, 1);
     double r13 = R(0, 2);

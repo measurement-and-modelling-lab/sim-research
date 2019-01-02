@@ -1,10 +1,10 @@
 g++ simulation.cpp				\
     -I ./functions				\
-    ./functions/ADF.cpp				\
+    ./functions/serafini2019.cpp		\
     ./functions/getIntermediateP.cpp		\
     ./functions/getSample.cpp		        \
     ./functions/compute4thOrderMoments.cpp	\
-    ./functions/counsell.cpp			\
+    ./functions/counsell2015.cpp		\
     ./functions/kolmogorovD.cpp			\
     ./functions/kurtosis.cpp			\
     ./functions/skewness.cpp			\
