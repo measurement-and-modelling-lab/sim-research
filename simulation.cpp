@@ -10,6 +10,21 @@ using namespace arma;
 #include "skewness.h"
 #include "getIntermediateP.h"
 #include "getSample.h"
+#include <iomanip> 
+
+
+
+rowvec getCoeffs(mat coefficients, double skewness, double kurtosis){
+	rowvec values(3);
+	for(int i = 0; i < coefficients.n_rows;i++){
+		if(coefficients(i,0) == skewness && coefficients(i,1) == kurtosis ){
+			values(0) = coefficients(i,2);
+			values(1) = coefficients(i,3);
+			values(2) = coefficients(i,4);
+		}
+	}
+	return values;
+}
 
 int main(void) {
 
@@ -18,12 +33,17 @@ int main(void) {
 
     mat conditions;
     conditions.load("conditions.csv");
+	mat coefficients;
+	coefficients.load("coefficients.csv");
+
+	// Only shed row if the csv has a header row
+	coefficients.shed_row(0);
 
     vec seeds;
     seeds.load("seeds.csv");
 
     // Print header for .csv
-    cout << "skewness_nominal,kurtosis_nominal,rho12,rho23,statistic,alpha,D,skewness_observed,kurtosis_observed" << endl;
+    cout << "skewness_nominal1,kurtosis_nominal1,skewness_nominal2,kurtosis_nominal2,skewness_nominal3,kurtosis_nominal3,rho12,rho23,statistic,alpha,D,skewness_observed,kurtosis_observed" << endl;
 
     double delta = 0.1;
 
@@ -42,15 +62,20 @@ int main(void) {
     	int counter_counsell = 0;
 
 	// Extract condition parameters
-	int skewness_nominal = conditions(i, 0);
-	int kurtosis_nominal = conditions(i, 1);
-    	int n = conditions(i, 2);
-    	double rho12 = conditions(i, 3);
-    	double rho23 = conditions(i, 4);
-    	double b = conditions(i, 5);
-    	double c = conditions(i, 6);
-    	double d = conditions(i, 7);
-    	double a = -c;
+		int skewness_nominal1 = conditions(i, 0);
+		int kurtosis_nominal1 = conditions(i, 1);
+		int skewness_nominal2 = conditions(i, 2);
+		int kurtosis_nominal2 = conditions(i, 3);
+		int skewness_nominal3 = conditions(i, 4);
+		int kurtosis_nominal3 = conditions(i, 5);
+    	int n = conditions(i, 6);
+    	double rho12 = conditions(i, 7);
+    	double rho23 = conditions(i, 8);
+		mat FTable;
+		FTable.insert_rows(0,getCoeffs(coefficients,skewness_nominal1,kurtosis_nominal1));
+		FTable.insert_rows(1,getCoeffs(coefficients,skewness_nominal2,kurtosis_nominal2));
+		FTable.insert_rows(2,getCoeffs(coefficients,skewness_nominal3,kurtosis_nominal3));
+		cout.precision(6);
 
     	// Assemble the population correlation matrix
     	mat P;
@@ -60,33 +85,31 @@ int main(void) {
     	P(1, 2) = rho23;
     	P = symmatu(P);
 
-	// Calculate the intermediate correlation matrix (Value & Maurelli, 1983)
-	mat intermediate_P = getIntermediateP(P, b, c, d);
 
+	// Calculate the intermediate correlation matrix (Value & Maurelli, 1983)
+	mat intermediate_P = getIntermediateP(P, FTable);
     	for (int j = 0; j < iterations; j++) {
 
-	    // Generate sample data (Value & Muarelli, 1983)
-	    int seed = seeds(i * iterations + j - 1);
-    	    mat sample = getSample(n, intermediate_P, seed, a, b, c, d);
-
+	    	// Generate sample data (Value & Muarelli, 1983)
+	    	int seed = seeds(i * iterations + j - 1);
+    	    mat sample = getSample(n, intermediate_P, seed, FTable);
     	    mat R = cor(sample);
-
-	    vec moments = compute4thOrderMoments(sample);
+	    	vec moments = compute4thOrderMoments(sample);
     	    p_serafini(j) = serafini2019(R, n, delta, moments);
     	    if (p_serafini(j) <= .05) {
-    		counter_serafini++;
+    			counter_serafini++;
     	    }
 
-    	    p_counsell(j) = counsell2015(R, n, delta);
+    	    p_counsell(j) = counsell2015(R, 	n, delta);
     	    if (p_counsell(j) <= .05) {
-    		counter_counsell++;
+    			counter_counsell++;
     	    }
 
-	    // Calculate/sum the skewness and kurtosis of each marginal distribution
-	    for (int k = 0; k < 3; k++) {
-		kurtosis_observed = kurtosis_observed + kurtosis(sample.col(k));
-		skewness_observed = skewness_observed + skewness(sample.col(k));
-	    }
+			// Calculate/sum the skewness and kurtosis of each marginal distribution
+			for (int k = 0; k < 3; k++) {
+				kurtosis_observed = kurtosis_observed + kurtosis(sample.col(k));
+				skewness_observed = skewness_observed + skewness(sample.col(k));
+			}
 
 	}
 
@@ -103,8 +126,12 @@ int main(void) {
 	kurtosis_observed = kurtosis_observed / (iterations * 3);
 
 	// Print output (to be piped to a .csv)
-        cout << skewness_nominal  << ","
-	     << kurtosis_nominal  << ","
+        cout << skewness_nominal1  << ","
+	     << kurtosis_nominal1  << ","
+		 << skewness_nominal2  << ","
+	     << kurtosis_nominal2  << ","
+		 << skewness_nominal3  << ","
+	     << kurtosis_nominal3  << ","
 	     << rho12             << ","
 	     << rho23             << ","
 	     << "serafini"        << ","
@@ -113,8 +140,12 @@ int main(void) {
              << skewness_observed << ","
 	     << kurtosis_observed << endl; 
 
-        cout << skewness_nominal  << ","
-	     << kurtosis_nominal  << ","
+        cout << skewness_nominal1  << ","
+	     << kurtosis_nominal1  << ","
+		 << skewness_nominal2  << ","
+	     << kurtosis_nominal2  << ","
+		 << skewness_nominal3  << ","
+	     << kurtosis_nominal3  << ","
 	     << rho12             << ","
 	     << rho23             << ","
 	     << "counsell"        << ","
