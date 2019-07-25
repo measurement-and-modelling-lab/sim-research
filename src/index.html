@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link href="./css/bootstrap.css" rel="stylesheet" />
+    <link href="./css/bootstrap-theme.css" rel="stylesheet" />
+    <script src="./js/bootstrap.min.js"></script>
+    <meta charset="UTF-8">
+    <title>Serafini2019</title>
+  </head>
+  <body style="margin:50px;">
+    <h1>Serafini2019</h1>
+    <!-- <form id="config_form">
+        <div class="form-group" >
+        Conditions File <br \>
+        <input class="form-control" name="conditions" type="file" value="">
+        <br \>
+        Number of Interations<br \>
+        <input class="form-control" name="iterations" type="text" value="">
+        <br \>
+        Seeds file <br \>
+        <input class="form-control" name="seeds" type="file" value="">
+        <br \>
+        <input id="run_button" type="button" value="Run">
+        <br \>
+        </div>
+    </form> -->
+    <form id="config_form" >
+            <div class="form-group row">
+              <label for="conditions_input" class="col-sm-2 col-form-label">Conditions File</label>
+              <div class="col">
+                <input type="file" class="form-control" id="conditions_input" name="conditions" placeholder="Conditions File">
+              </div>
+            </div>
+            <div class="form-group row">
+              <label for="iterations_input" class="col-sm-2 col-form-label">Number of Interations</label>
+              <div class="col">
+                <input type="number" name="iterations" class="form-control" id="iterations_input" placeholder="Number of Interations">
+              </div>
+            </div>
+            <div class="form-group row">
+                    <label for="seeds_input" class="col-sm-2 col-form-label">Seeds file</label>
+                    <div class="col-sm-10">
+                      <input aria-describedby="seedsHelpBlock" type="file" name="seeds" class="form-control" id="seeds_input" placeholder="Seeds file">
+                    </div>
+                    <!-- <small id="seedsHelpBlock" class="form-text text-muted">
+                            You need at least (Number of Interations)*(Number of conditions) seeds to complete simulation.
+                    </small> -->
+            </div>
+            <div class="form-group row">
+                    <div class="col-sm-10">
+                      <button id="run_button" type="button" class="btn btn-primary">Run</button>
+                    </div>
+            </div>
+          </form>
+
+    <!-- You can also require other files to run in this process -->
+    <script src="./renderer.js"></script>
+    <script src="./js/form.js"></script>
+  </body>
+</html>
