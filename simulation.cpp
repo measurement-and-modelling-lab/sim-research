@@ -103,20 +103,20 @@ rowvec getCoeffs(mat coefficients, double skewness, double kurtosis){
 	return values;
 }
 
-int main(void) {
+int main(int argc, char ** argv) {
 
     // The number of iterations per condition
-    iterations = 12000;
+    iterations = atoi(argv[1]);
 
     mat conditions;
-    conditions.load("conditions.csv");
+    conditions.load(argv[2]);
 	mat coefficients;
 	coefficients.load("coefficients.csv");
 
 	// Only shed row if the csv has a header row
 	coefficients.shed_row(0);
 
-    seeds.load("seeds.csv");
+    seeds.load(argv[3]);
 
     // Print header for .csv
     cout << "skewness_nominal1,kurtosis_nominal1,skewness_nominal2,kurtosis_nominal2,skewness_nominal3,kurtosis_nominal3,rho12,rho23,statistic,alpha,D,skewness_observed,kurtosis_observed" << endl;
