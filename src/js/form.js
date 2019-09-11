@@ -1,14 +1,13 @@
 const exec = require('child_process').exec;
+let spawn = require("child_process").spawn;
 const fs = require('fs');
 var path = require('path');
 var os = require('os');
 console.log(os.platform());
-var fileToWatch = path.join(__dirname, '../','test_out.csv');
 var simRunning = false;
 var progress = 0;
 var numConditions;
 var progressBar;
-console.log(fileToWatch);
 function execute(command, callback) {
     exec(command, (error, stdout, stderr) => { 
         callback(stdout); 
@@ -19,6 +18,7 @@ function execute(command, callback) {
     var run =  document.getElementById("run_button")
     progressBar = document.getElementById("progress_bar")
     run.addEventListener("click", function(){
+        // Collect the form data
         document.getElementById("progress_bar_div").style.visibility = "visible";
         form = document.getElementById("config_form");
         var conditions = form.conditions.files[0].path;
@@ -37,29 +37,36 @@ function execute(command, callback) {
         console.log(conditions)
         console.log(iterations)
         console.log(seeds)
-        // execute('./simulation conditions.csv 12000 seeds.csv', (output) => {
-        //     console.log(output);
-        // });
+        let testFile = 'test_out.csv'
+        var fileToWatch = path.join(__dirname, '../',testFile);
+        // build command and run it 
+        const command = `./simulation ${iterations} ${conditions} ${seeds} >> ${testFile}`
+        exec(command, (err, output) => {
+            console.log(output);
+        });
+        // Set this flag so the file will be watched
         simRunning=true;
+         //Watch the out file
+        fs.watchFile(fileToWatch, function (curr, prev) {
+            //console.log(simRunning)
+            if(simRunning){
+                var i;
+                var count = 0;
+                //Read current file and get how many lines
+                fs.createReadStream(fileToWatch)
+                .on('data', function(chunk) {
+                    for (i=0; i < chunk.length; ++i)
+                    if (chunk[i] == 10) count++;
+                })
+                .on('end', function() { // After reading update progress bar based on how many lines are there
+                    console.log(count);
+                    progress = Math.round((((count/2)+1)/numConditions)*100);
+                    progressBar.style.width = ""+progress+"%";
+                    progressBar.setAttribute('aria-valuenow', progress)
+                    progressBar.innerHTML =  ""+progress+"%";
+                    console.log(progress);
+                });
+            }
+        });
       });
  })();
-fs.watchFile(fileToWatch, function (curr, prev) {
-        console.log(simRunning)
-        if(simRunning){
-            var i;
-            var count = 0;
-            fs.createReadStream(fileToWatch)
-            .on('data', function(chunk) {
-                for (i=0; i < chunk.length; ++i)
-                if (chunk[i] == 10) count++;
-            })
-            .on('end', function() {
-                console.log(count);
-                progress = Math.round((count/numConditions)*100);
-                progressBar.style.width = ""+progress+"%";
-                progressBar.setAttribute('aria-valuenow', progress)
-                progressBar.innerHTML =  ""+progress+"%";
-                console.log(progress);
-            });
-        }
-});
