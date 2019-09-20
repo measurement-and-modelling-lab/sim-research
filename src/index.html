@@ -24,7 +24,7 @@
         <br \>
         </div>
     </form> -->
-    <form id="config_form" style="float:left;margin-right:20px " >
+    <form id="config_form" >
             <div class="form-group row">
               <label for="conditions_input" class="col-sm-2 col-form-label">Conditions File</label>
               <div class="col">
@@ -50,19 +50,15 @@
                     <div class="col-sm-10">
                       <button id="run_button" type="button" class="btn btn-primary">Run</button>
                     </div>
+                    <div class="col">
+                      <button id="gen_seeds" type="button" class="btn btn-primary">Generate Seeds File</button>
+                    </div>
             </div>
             <div id="progress_bar_div" style="visibility:hidden;" class="progress">
                 <div id= "progress_bar" class="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
               </div>
           </form>  
-    <div class="container" id = "simout" style ="margin-left: 2rem">
-        <div class="overflow-auto card bg-light mb-3" style="max-width: 80rem;min-width: 20rem;max-height: 40rem">
-            <div class="card-header">Output</div>
-            <div class="card-body">
-              <table id= "OutputData" class="table card-text">The live output of the simulation will appear here when ran.</table>
-            </div>
-          </div>
-    </div>
+
     <!-- You can also require other files to run in this process -->
     <script src="./renderer.js"></script>
     <script src="./js/form.js"></script>
