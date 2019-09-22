@@ -9,11 +9,11 @@ var progress = 0;
 var numConditions;
 var progressBar;
 function execute(command, callback) {
-    exec(command, (error, stdout, stderr) => { 
-        callback(stdout); 
+    exec(command, (error, stdout, stderr) => {
+        callback(stdout);
     });
 };
-
+var call = 0;
 (function() {
     var run =  document.getElementById("run_button")
     progressBar = document.getElementById("progress_bar")
@@ -37,9 +37,10 @@ function execute(command, callback) {
         console.log(conditions)
         console.log(iterations)
         console.log(seeds)
-        let testFile = 'test_out.csv'
+        call = call + 1;
+        let testFile = 'test_out'+ call + '.csv';
         var fileToWatch = path.join(__dirname, '../',testFile);
-        // build command and run it 
+        // build command and run it
         const command = `./simulation ${iterations} ${conditions} ${seeds} >> ${testFile}`
         exec(command, (err, output) => {
             console.log(output);
