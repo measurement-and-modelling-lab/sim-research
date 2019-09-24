@@ -2,3 +2,4 @@
 *.o
 *.out
 node_modules/
+/.vs
