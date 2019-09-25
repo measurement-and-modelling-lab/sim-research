@@ -1,0 +1,14 @@
+﻿  compute4thOrderMoments.cpp
+  counsell2015.cpp
+  getIntermediateP.cpp
+  getSample.cpp
+  kolmogorovD.cpp
+  kurtosis.cpp
+  serafini2019.cpp
+  skewness.cpp
+  simulation.cpp
+  Generating Code...
+  simulation_windows.vcxproj -> C:\Users\Tomi\Documents\GitHub\sim-research\x64\Debug\simulation_windows.exe
+  lib_win64\blas_win64_MT.dll
+  lib_win64\lapack_win64_MT.dll
+          2 file(s) copied.

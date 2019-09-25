@@ -52,11 +52,18 @@ function execute(command, callback) {
             if(simRunning){
                 var i;
                 var count = 0;
+                var str = "";
+                var outPutBox = document.getElementById("OutputData");
                 //Read current file and get how many lines
                 fs.createReadStream(fileToWatch)
                 .on('data', function(chunk) {
-                    for (i=0; i < chunk.length; ++i)
-                    if (chunk[i] == 10) count++;
+                    let outStr = chunk.toString();
+                    outStr = buildOutTable(outStr);
+                    outPutBox.innerHTML = outStr;
+                    str+= chunk.toString();
+                    for (i=0; i < chunk.length; ++i){
+                        if (chunk[i] == 10) count++;
+                    }
                 })
                 .on('end', function() { // After reading update progress bar based on how many lines are there
                     console.log(count);
@@ -66,7 +73,21 @@ function execute(command, callback) {
                     progressBar.innerHTML =  ""+progress+"%";
                     console.log(progress);
                 });
+                console.log(str)
             }
         });
       });
  })();
+
+ const buildOutTable = (str) => {
+    let result = "";
+    str = str.split("\n");
+    console.log(str)
+    for(let i = 0; i<str.length;i++){
+        let trstr = "<tr><td>";
+        let trstrend = "</td></tr>";
+        str[i] = trstr.concat(str[i],trstrend);
+        str[i] = str[i].replace(/,/g,"</td><td>")
+    }
+    return str.join('');
+ }
