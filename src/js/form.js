@@ -47,6 +47,7 @@ function execute(command, callback) {
         // Set this flag so the file will be watched
         simRunning=true;
          //Watch the out file
+        
         fs.watchFile(fileToWatch, function (curr, prev) {
             //console.log(simRunning)
             if(simRunning){
@@ -59,6 +60,10 @@ function execute(command, callback) {
                 .on('data', function(chunk) {
                     let outStr = chunk.toString();
                     outStr = buildOutTable(outStr);
+                    if(progress == 100){
+                        simRunning = false;
+                        outStr = fs.readFileSync(fileToWatch);
+                    }
                     outPutBox.innerHTML = outStr;
                     str+= chunk.toString();
                     for (i=0; i < chunk.length; ++i){
@@ -73,7 +78,6 @@ function execute(command, callback) {
                     progressBar.innerHTML =  ""+progress+"%";
                     console.log(progress);
                 });
-                console.log(str)
             }
         });
       });
