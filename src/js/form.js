@@ -62,10 +62,12 @@ function execute(command, callback) {
         minSeeds = iterations * numConditions;
         var time = new Date();
         var date = time.toUTCString();
-        
-        let seedsFile = `seeds(${date}).csv`;
+        date = date.replace(/ /g,"_");
+        date = date.replace(/,/g,"");
+        date = date.replace(/:/g,"-");
+        let seedsFile = `seeds${date}.csv`;
         console.log(seedsFile);
-        var fileToWatch = path.join(__dirname, '../',seedsFile);
+        seedsFile = path.join(__dirname, '../',seedsFile);
         // build command and run it 
         const command = `./seed_generator ${minSeeds+1} >> ${seedsFile}`
         
