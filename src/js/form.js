@@ -1,14 +1,16 @@
 const exec = require('child_process').exec;
-let spawn = require("child_process").spawn;
 const fs = require('fs');
-var path = require('path');
-var os = require('os');
+const kill = require('tree-kill');
+const path = require('path');
+const os = require('os');
 console.log(os.platform());
 var simRunning = false;
 var progress = 0;
 var numConditions;
 var progressBar;
 var form;
+var simulationCpp;
+var simPid;
 
 function execute(command, callback) {
     exec(command, (error, stdout, stderr) => { 
@@ -18,6 +20,7 @@ function execute(command, callback) {
 
 (function() {
     var run_sim = document.getElementById("run_button");
+    var stop_sim = document.getElementById("stop_button");
     var gen_seeds = document.getElementById("gen_seeds");
     var conditions_file_element = document.getElementById("conditions_input");
     var seeds_file_element = document.getElementById("seeds_input");
@@ -80,11 +83,22 @@ function execute(command, callback) {
         }
         run_executable(command, finished);
     });
-        
+    
+    stop_sim.addEventListener("click", () => { 
+        simulationCpp.on('close', (code, signal) => {
+            console.log(
+              `child process terminated due to receipt of signal ${signal}`);
+              simPid = null;
+          });
+        kill(simPid);
+        console.log(simulationCpp.killed);
+
+    })
+
     run_sim.addEventListener("click", function(){                   //runs the simulation
         console.log("starting simulation\n");
         document.getElementById("progress_bar_div").style.visibility = "visible";
-        
+        document.getElementById("stop_button").style.visibility = "visible";
         iterations = form.iterations.value;
         minSeeds = iterations * numConditions;
         if (numSeeds>=minSeeds){
@@ -95,9 +109,11 @@ function execute(command, callback) {
             var fileToWatch = path.join(__dirname, '../',testFile);
             // build command and run it 
             const command = `./simulation ${iterations} ${conditions} ${seeds} >> ${testFile}`
-            exec(command, (err, output) => {
+            simulationCpp = exec(command, (err, output) => {
                 console.log(output);
             });
+            simPid = simulationCpp.pid;
+            console.log(`spawned process on pid ${simPid}`)
             // Set this flag so the file will be watched
             simRunning=true;
              //Watch the out file
