@@ -92,6 +92,10 @@ function execute(command, callback) {
           });
         kill(simPid);
         console.log(simulationCpp.killed);
+        document.getElementById("progress_bar_div").style.visibility = "hidden";
+        document.getElementById("stop_button").style.visibility = "hidden";
+        progress = 0;
+        simRunning = false;
 
     })
 
