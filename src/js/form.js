@@ -7,9 +7,6 @@ console.log(os.platform());
 var simRunning = false;
 var progress = 0;
 var numConditions;
-var numSeeds;
-var iterations;
-var minSeeds;
 var progressBar;
 var form;
 
@@ -109,9 +106,17 @@ function execute(command, callback) {
                 if(simRunning){
                     var i;
                     var count = 0;
+                    var outPutBox = document.getElementById("OutputData");
                     //Read current file and get how many lines
                     fs.createReadStream(fileToWatch)
                     .on('data', function(chunk) {
+                        let outStr = chunk.toString();
+                        outStr = buildOutTable(outStr);
+                        if(progress == 100){
+                            simRunning = false;
+                            outStr = fs.readFileSync(fileToWatch);
+                        }
+                        outPutBox.innerHTML = outStr;
                         for (i=0; i < chunk.length; ++i)
                         if (chunk[i] == 10) count++;
                     })
@@ -130,3 +135,15 @@ function execute(command, callback) {
         }
     });
 })();
+const buildOutTable = (str) => {
+    let result = "";
+    str = str.split("\n");
+    console.log(str)
+    for(let i = 0; i<str.length;i++){
+        let trstr = "<tr><td>";
+        let trstrend = "</td></tr>";
+        str[i] = trstr.concat(str[i],trstrend);
+        str[i] = str[i].replace(/,/g,"</td><td>")
+    }
+    return str.join('');
+ }
