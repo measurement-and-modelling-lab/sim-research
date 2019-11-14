@@ -91,8 +91,8 @@ void slowPart(int start,
     }
 }
 
-rowvec getCoeffs(mat coefficients, double skewness, double kurtosis){
-	return fleishman1978(skewness,kurtosis) ;
+rowvec getCoeffs(double skewness, double kurtosis){
+	return fleishman1978(skewness,kurtosis);
 }
 
 int main(int argc, char ** argv) {
@@ -102,11 +102,6 @@ int main(int argc, char ** argv) {
 
     mat conditions;
     conditions.load(argv[2]);
-	mat coefficients;
-	coefficients.load("coefficients.csv");
-
-	// Only shed row if the csv has a header row
-	coefficients.shed_row(0);
 
     seeds.load(argv[3]);
 
@@ -138,9 +133,9 @@ int main(int argc, char ** argv) {
     	n = conditions(i, 6);
     	double rho12 = conditions(i, 7);
     	double rho23 = conditions(i, 8);
-		FTable.insert_rows(0,getCoeffs(coefficients,skewness_nominal1,kurtosis_nominal1));
-		FTable.insert_rows(1,getCoeffs(coefficients,skewness_nominal2,kurtosis_nominal2));
-		FTable.insert_rows(2,getCoeffs(coefficients,skewness_nominal3,kurtosis_nominal3));
+		FTable.insert_rows(0,getCoeffs(skewness_nominal1,kurtosis_nominal1));
+		FTable.insert_rows(1,getCoeffs(skewness_nominal2,kurtosis_nominal2));
+		FTable.insert_rows(2,getCoeffs(skewness_nominal3,kurtosis_nominal3));
 		cout.precision(6);
 
     	// Assemble the population correlation matrix
