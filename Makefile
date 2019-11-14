@@ -1,10 +1,8 @@
 sim:
-	g++ simulation.cpp -I ./functions ./functions/serafini2019.cpp ./functions/getIntermediateP.cpp ./functions/getSample.cpp ./functions/compute4thOrderMoments.cpp ./functions/counsell2015.cpp ./functions/kolmogorovD.cpp ./functions/kurtosis.cpp ./functions/skewness.cpp -larmadillo -pthread -std=c++11 -o simulation
+	g++ simulation.cpp -I ./include/optim ./functions/serafini2019.cpp ./functions/getIntermediateP.cpp ./functions/getSample.cpp ./functions/compute4thOrderMoments.cpp ./functions/counsell2015.cpp ./functions/kolmogorovD.cpp ./functions/kurtosis.cpp ./functions/skewness.cpp ./functions/fleishman1978.cpp -larmadillo -pthread -std=c++11 -o simulation
 
 
-    
-    
-    
+
 
 funcs:
 	g++ -c ./functions/serafini2019.cpp ./functions/getIntermediateP.cpp ./functions/getSample.cpp ./functions/counsell2015.cpp ./functions/compute4thOrderMoments.cpp ./functions/kolmogorovD.cpp ./functions/skewness.cpp ./functions/kurtosis.cpp
