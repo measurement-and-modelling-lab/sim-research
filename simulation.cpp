@@ -7,15 +7,15 @@
 
 using namespace arma;
 #define ARMA_NO_DEBUG // disable bound checks to improve speed
-
-#include "serafini2019.h"
-#include "compute4thOrderMoments.h"
-#include "counsell2015.h"
-#include "kolmogorovD.h"
-#include "kurtosis.h"
-#include "skewness.h"
-#include "getIntermediateP.h"
-#include "getSample.h"
+#include "./functions/serafini2019.h"
+#include "./functions/compute4thOrderMoments.h"
+#include "./functions/counsell2015.h"
+#include "./functions/kolmogorovD.h"
+#include "./functions/kurtosis.h"
+#include "./functions/skewness.h"
+#include "./functions/getIntermediateP.h"
+#include "./functions/getSample.h"
+#include "./functions/fleishman1978.h"
 #include <iomanip> 
 #include <thread>
 
@@ -92,15 +92,7 @@ void slowPart(int start,
 }
 
 rowvec getCoeffs(mat coefficients, double skewness, double kurtosis){
-	rowvec values(3);
-	for(int i = 0; i < coefficients.n_rows;i++){
-		if(coefficients(i,0) == skewness && coefficients(i,1) == kurtosis ){
-			values(0) = coefficients(i,2);
-			values(1) = coefficients(i,3);
-			values(2) = coefficients(i,4);
-		}
-	}
-	return values;
+	return fleishman1978(skewness,kurtosis) ;
 }
 
 int main(int argc, char ** argv) {
