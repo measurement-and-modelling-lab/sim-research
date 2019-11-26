@@ -11,6 +11,9 @@ var progressBar;
 var form;
 var simulationCpp;
 var simPid;
+var jsdom = require('jsdom');
+const {JSDOM} = jsdom;
+var $ = jQuery = require('jquery')(window);
 
 function execute(command, callback) {
     exec(command, (error, stdout, stderr) => { 
@@ -28,7 +31,7 @@ function execute(command, callback) {
     var seeds;
     progressBar = document.getElementById("progress_bar");
     form = document.getElementById("config_form");
-    
+
     conditions_file_element.addEventListener("change", function(){  //calculate number of conditions
         conditions = this.files[0].path;
         numConditions = -1;
@@ -57,6 +60,7 @@ function execute(command, callback) {
     
     gen_seeds.addEventListener("click", function(){                 //generate seeds file
         if(!conditions_file_element.files[0] ||form.iterations.value==0){
+			
             console.log("please choose a conditions and seeds file\n");
             return;
         }
