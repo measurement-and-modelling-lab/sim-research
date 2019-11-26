@@ -4,6 +4,7 @@ const kill = require('tree-kill');
 const path = require('path');
 const os = require('os');
 console.log(os.platform());
+const userOS = os.platform();
 var simRunning = false;
 var progress = 0;
 var numConditions;
@@ -118,7 +119,20 @@ function execute(command, callback) {
             let testFile = 'test_out.csv'
             var fileToWatch = path.join(__dirname, '../',testFile);
             // build command and run it 
-            const command = `./simulation ${iterations} ${conditions} ${seeds} >> ${testFile}`
+            if(userOS == 'win32'){
+                console.log("Running Windows Binary");
+                const command = `./x64/Debug/simulation_windows.exe ${iterations} ${conditions} ${seeds}`
+            }else if(userOS ==  'darwin'){
+                console.log("Running OSX Binary");
+                const command = `./simulation ${iterations} ${conditions} ${seeds} >> ${testFile}` 
+            }else if(userOS ==  'linux'){
+                console.log("Running Linux Binary");
+                const command = `./simulation ${iterations} ${conditions} ${seeds} >> ${testFile}` 
+            }else{
+                console.log("User is running program on an unsupported os");
+                //Throw error
+            }
+            //const command = `./simulation ${iterations} ${conditions} ${seeds} >> ${testFile}`
             simulationCpp = exec(command, (err, output) => {
                 console.log(output);
             });

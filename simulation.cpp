@@ -7,15 +7,15 @@
 
 using namespace arma;
 #define ARMA_NO_DEBUG // disable bound checks to improve speed
-
-#include "serafini2019.h"
-#include "compute4thOrderMoments.h"
-#include "counsell2015.h"
-#include "kolmogorovD.h"
-#include "kurtosis.h"
-#include "skewness.h"
-#include "getIntermediateP.h"
-#include "getSample.h"
+#include "./functions/serafini2019.h"
+#include "./functions/compute4thOrderMoments.h"
+#include "./functions/counsell2015.h"
+#include "./functions/kolmogorovD.h"
+#include "./functions/kurtosis.h"
+#include "./functions/skewness.h"
+#include "./functions/getIntermediateP.h"
+#include "./functions/getSample.h"
+#include "./functions/fleishman1978.h"
 #include <iomanip> 
 #include <thread>
 
@@ -91,16 +91,8 @@ void slowPart(int start,
     }
 }
 
-rowvec getCoeffs(mat coefficients, double skewness, double kurtosis){
-	rowvec values(3);
-	for(int i = 0; i < coefficients.n_rows;i++){
-		if(coefficients(i,0) == skewness && coefficients(i,1) == kurtosis ){
-			values(0) = coefficients(i,2);
-			values(1) = coefficients(i,3);
-			values(2) = coefficients(i,4);
-		}
-	}
-	return values;
+rowvec getCoeffs(double skewness, double kurtosis){
+	return fleishman1978(skewness,kurtosis);
 }
 
 int main(int argc, char ** argv) {
@@ -110,11 +102,6 @@ int main(int argc, char ** argv) {
 
     mat conditions;
     conditions.load(argv[2]);
-	mat coefficients;
-	coefficients.load("coefficients.csv");
-
-	// Only shed row if the csv has a header row
-	coefficients.shed_row(0);
 
     seeds.load(argv[3]);
 
@@ -146,9 +133,9 @@ int main(int argc, char ** argv) {
     	n = conditions(i, 6);
     	double rho12 = conditions(i, 7);
     	double rho23 = conditions(i, 8);
-		FTable.insert_rows(0,getCoeffs(coefficients,skewness_nominal1,kurtosis_nominal1));
-		FTable.insert_rows(1,getCoeffs(coefficients,skewness_nominal2,kurtosis_nominal2));
-		FTable.insert_rows(2,getCoeffs(coefficients,skewness_nominal3,kurtosis_nominal3));
+		FTable.insert_rows(0,getCoeffs(skewness_nominal1,kurtosis_nominal1));
+		FTable.insert_rows(1,getCoeffs(skewness_nominal2,kurtosis_nominal2));
+		FTable.insert_rows(2,getCoeffs(skewness_nominal3,kurtosis_nominal3));
 		cout.precision(6);
 
     	// Assemble the population correlation matrix
