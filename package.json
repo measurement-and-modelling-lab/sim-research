@@ -12,7 +12,7 @@
     "electron": "^5.0.7"
   },
   "dependencies": {
-    "jquery": "^3.4.1",
+    "jquery": "^3.5.0",
     "jsdom": "^15.2.0",
     "toastr": "^2.1.4",
     "tree-kill": "^1.2.1"
