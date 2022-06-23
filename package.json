@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "jquery": "^3.4.1",
-    "jsdom": "^15.2.0",
+    "jsdom": "^16.5.0",
     "toastr": "^2.1.4",
     "tree-kill": "^1.2.1"
   }
